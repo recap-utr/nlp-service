@@ -4,16 +4,15 @@ import typing as t
 from dataclasses import dataclass
 from datetime import datetime
 
-import httpx
 import numpy as np
 import spacy
+from gql import Client, gql
+from gql.transport.aiohttp import AIOHTTPTransport
 from scipy.spatial import distance
 from spacy.tokens import Doc, DocBin  # type: ignore
 
 from recap_nlp import common
 from recap_nlp.common import BaseQuery
-
-session = httpx.Client()
 
 
 def _check_response(r: httpx.Response) -> None:
@@ -39,6 +38,12 @@ class Client:
     host: str
     port: int
     base_query: common.BaseQuery
+
+    # Select your transport with a defined url endpoint
+    transport = AIOHTTPTransport(url="https://countries.trevorblades.com/")
+
+    # Create a GraphQL client using the defined transport
+    client = Client(transport=transport, fetch_schema_from_transport=True)
 
     @property
     def base_url(self) -> str:

@@ -3,21 +3,22 @@ from __future__ import annotations
 import io
 import typing as t
 from abc import ABC, abstractmethod
+from base64 import b85decode
 from enum import Enum
 
+import graphene
 import numpy as np
 import spacy
 import tensorflow_hub as hub
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
 from sentence_transformers import SentenceTransformer
 from spacy.tokens import Doc, DocBin, Span, Token  # type: ignore
+from starlette.graphql import GraphQLApp
 
 from recap_nlp import common
 
 Vector = t.Union[t.Tuple[float, ...], t.Tuple[t.Tuple[float, ...], ...]]
-app = FastAPI()
 
 
 # https://spacy.io/usage/processing-pipelines#built-in
@@ -69,50 +70,25 @@ class UseModel(EmbeddingModel):
 
 
 embedding_map = {
-    common.Embedding.USE: UseModel,
-    common.Embedding.SENTENCE_TRF: TransformerModel,
+    "use": UseModel,
+    "sentence-trf": TransformerModel,
 }
 
 
-# def _verify_query(q: common.BaseQuery) -> t.Optional[HTTPException]:
-#     err = []
-
-#     if len(q.models) == 0:
-#         err.append("You did not specify any models. At least one is required.")
-
-#     if len(q.models) > 1 and not q.concat_model:
-#         err.append(
-#             "You specified multiple embeddings, but no spacy model that is responsible for concatenation."
-#         )
-
-#     for i, model in enumerate(q.models):
-#         if model.embedding_type and not model.embedding_model:
-#             err.append(
-#                 f"Model '{i}' specifies embedding_type '{model.embedding_type.value}', but no embedding_model."
-#             )
-#         elif model.embedding_model and not model.embedding_type:
-#             err.append(
-#                 f"Model '{i}' specifies embedding_model '{model.embedding_model}', but no embedding_type."
-#             )
-
-#     if err:
-#         return HTTPException(status_code=422, detail=" ".join(err))
-
-#     return None
-
-
-def _load_spacy(q: common.BaseQuery, **kwargs) -> spacy.Language:
+def _load_spacy(data: t.Mapping[str, t.Any], **kwargs) -> spacy.Language:
     models = []
 
-    for user_model in q.models:
-        tmp_model = embedding_map[user_model.embedding_type](user_model.embedding_model)
+    for user_model in data["models"]:
+        tmp_model = embedding_map[user_model.embedding_type.value](
+            user_model.embedding_model
+        )
         models.append(tmp_model)
 
-    model = spacy.load(q.spacy_model, **kwargs)
+    model = spacy.load(data["spacy_model"], **kwargs)
     model.add_pipe(
         "concat",
         last=True,
-        config={"models": models, "token_vectors": q.token_vectors},
+        config={"models": models, "token_vectors": data["token_vectors"]},
     )
 
     return model
@@ -153,9 +129,6 @@ class ConcatModel:
         return np.concatenate(vecs)
 
 
-_vector_cache = {}
-
-
 def _convert_vector(
     vector: t.Union[np.ndarray, t.List[np.ndarray]], token_vectors: bool
 ) -> Vector:
@@ -167,69 +140,106 @@ def _convert_vector(
     return tuple(vector.tolist())
 
 
-def _vector(text: str, q: common.BaseQuery, nlp: spacy.Language) -> Vector:
-    if text not in _vector_cache:
-        _vector_cache[text] = _convert_vector(nlp(text).vector, q.token_vectors)
-
-    return _vector_cache[text]
+class Embedding(graphene.Enum):
+    USE = "use"
+    SENTENCE_TRF = "sentence-trf"
 
 
-def _vectors(
-    texts: t.Iterable[str], q: common.BaseQuery, nlp: spacy.Language
-) -> t.Tuple[Vector, ...]:
-    unknown_texts = [text for text in texts if text not in _vector_cache]
-
-    if unknown_texts:
-        docs = nlp.pipe(unknown_texts)
-
-        for text, doc in zip(unknown_texts, docs):
-            _vector_cache[text] = _convert_vector(doc.vector)  # type: ignore
-
-    return tuple(_vector_cache[text] for text in texts)
+class EmbedingType(graphene.InputObjectType):
+    embedding_type = graphene.Field(Embedding, required=True)
+    embedding_model = graphene.String(required=True)
 
 
-class SingleQuery(common.BaseQuery):
-    text: str
+base_args = {
+    "language": graphene.String(required=True),
+    "spacy_model": graphene.String(required=True),
+    "models": graphene.List(EmbedingType, default_value=tuple()),
+    "token_vectors": graphene.Boolean(default_value=False),
+}
 
 
-@app.post("/vector")
-def vector(q: SingleQuery):
-    nlp = _load_spacy(q, exclude=spacy_components)
-    return _vector(q.text, q, nlp)
+class VectorType(graphene.ObjectType):
+    document = graphene.List(graphene.Float)
+    sentences = graphene.List(graphene.List(graphene.Float))
+    tokens = graphene.List(graphene.List(graphene.Float))
+
+    @staticmethod
+    def resolve_document(parent, info):
+        return _convert_vector(parent["doc"].vector, parent["token_vectors"])
+
+    @staticmethod
+    def resolve_sentences(parent, info):
+        return [
+            _convert_vector(sentence.vector, parent["token_vectors"])
+            for sentence in parent["doc"].sents
+        ]
+
+    @staticmethod
+    def resolve_tokens(parent, info):
+        return [
+            _convert_vector(token.vector, parent["token_vectors"])
+            for token in parent["doc"]
+        ]
 
 
-class MultiQuery(common.BaseQuery):
-    texts: t.Tuple[str, ...]
+class ModelType(graphene.ObjectType):
+    docbin = graphene.String(required=True)
+    vectors = graphene.List(VectorType)
+
+    @staticmethod
+    def resolve_model(parent, info):
+        docbin = DocBin(parent.get("attrs", tuple()))
+
+        for doc in parent["docs"]:
+            docbin.add(doc)
+
+        return b85decode(docbin.to_bytes()).decode("utf-8")
+
+    @staticmethod
+    def resolve_vectors(parent, info):
+        return [
+            {
+                "doc": doc,
+                "token_vectors": parent["token_vectors"],
+            }
+            for doc in parent["docs"]
+        ]
 
 
-@app.post("/vectors")
-def vectors(
-    q: MultiQuery,
-) -> t.Tuple[Vector, ...]:
-    nlp = _load_spacy(q, exclude=spacy_components)
-    return _vectors(q.texts, q, nlp)
+class Query(graphene.ObjectType):
+    vectors = graphene.List(
+        VectorType,
+        args={"texts": graphene.List(graphene.String, required=True), **base_args},
+    )
+    models = graphene.Field(
+        ModelType,
+        args={
+            "texts": graphene.List(graphene.String, required=True),
+            "attrs": graphene.List(graphene.String),
+            **base_args,
+        },
+    )
+
+    @staticmethod
+    def resolve_vectors(parent, info, **kwargs):
+        nlp = _load_spacy(kwargs, exclude=spacy_components)
+        return [
+            {
+                "doc": doc,
+                "token_vectors": kwargs["token_vectors"],
+            }
+            for doc in nlp.pipe(kwargs["texts"])
+        ]
+
+    @staticmethod
+    def resolve_models(parent, info, **kwargs):
+        nlp = _load_spacy(kwargs)
+        return {
+            "docs": nlp.pipe(kwargs["texts"]),
+            "token_vectors": kwargs["token_vectors"],
+            "attrs": kwargs["attrs"],
+        }
 
 
-@app.post("/model")
-def model(q: SingleQuery):
-    nlp = _load_spacy(q)
-    docbin = DocBin()
-    docbin.add(nlp(q.text))
-
-    return StreamingResponse(io.BytesIO(docbin.to_bytes()))
-
-
-@app.post("/models")
-def models(q: MultiQuery):
-    nlp = _load_spacy(q)
-    docbin = DocBin()
-
-    for doc in nlp.pipe(q.texts):
-        docbin.add(doc)
-
-    return StreamingResponse(io.BytesIO(docbin.to_bytes()))
-
-
-@app.get("/")
-def ready() -> bool:
-    return True
+app = FastAPI()
+app.add_route("/", GraphQLApp(schema=graphene.Schema(query=Query)))

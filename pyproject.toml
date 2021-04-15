@@ -17,7 +17,8 @@ uvicorn = { extras = ["standard"], version = "^0.13.4" }
 textacy = "^0.11.0"
 tensorflow = "^2.4.1"
 lemminflect = "^0.2.2"
-httpx = "^0.17.1"
+gql = {version = "^3.0.0a5", extras = ["aiohttp"], allow-prereleases = true}
+graphene = {version = "^3.0b7", allow-prereleases = true}
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
