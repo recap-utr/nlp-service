@@ -4,9 +4,10 @@ import io
 import typing as t
 from abc import ABC, abstractmethod
 from base64 import b85decode
+from dataclasses import dataclass
 from enum import Enum
 
-import graphene
+import graphene as g
 import numpy as np
 import spacy
 import tensorflow_hub as hub
@@ -69,10 +70,79 @@ class UseModel(EmbeddingModel):
         return embeddings[0].numpy()
 
 
+class SpacyModel(EmbeddingModel):
+    def __init__(self, model: str):
+        self._model = spacy.load(model, exclude=spacy_components)
+
+    def vector(self, text: str):
+        return self._model(text).vector
+
+
 embedding_map = {
+    "spacy": SpacyModel,
     "use": UseModel,
     "sentence-trf": TransformerModel,
 }
+
+
+class ConcatModel:
+    def __init__(self, models: t.Tuple[EmbeddingModel]):
+        self._models = models
+
+    def vector(self, obj):
+        if len(self._models) > 0:
+            vecs = [model.vector(obj.text) for model in self._models]
+            return np.concatenate(vecs)
+
+        return obj.vector
+
+    def vectors(self, obj):
+        if isinstance(obj, Token):
+            obj = [obj]
+
+        if len(self._models) > 0:
+            vecs = [[model.vector(t.text) for t in obj] for model in self._models]
+            return [np.concatenate(token_vecs) for token_vecs in vecs]
+
+        return [t.vector for t in obj]
+
+
+@spacy.Language.factory("concat")
+class ConcatComponent:
+    def __init__(self, nlp, name, models):
+        self._models = models
+
+    def __call__(self, doc):
+        doc._.set("concat_model", ConcatModel(self._models))
+
+        return doc
+
+
+Doc.set_extension("concat_model", default=None)  # TODO: Might cause exceptions
+Doc.set_extension(
+    "vectors",
+    getter=lambda doc: doc._.concat_model.vectors(doc),
+)
+Doc.set_extension(
+    "vector",
+    getter=lambda doc: doc._.concat_model.vector(doc),
+)
+Span.set_extension(
+    "vectors",
+    getter=lambda span: span.doc._.concat_model.vectors(span),
+)
+Span.set_extension(
+    "vector",
+    getter=lambda span: span.doc._.concat_model.vector(span),
+)
+Token.set_extension(
+    "vectors",
+    getter=lambda token: token.doc._.concat_model.vectors(token),
+)
+Token.set_extension(
+    "vector",
+    getter=lambda token: token.doc._.concat_model.vector(token),
+)
 
 
 def _load_spacy(data: t.Mapping[str, t.Any], **kwargs) -> spacy.Language:
@@ -88,134 +158,124 @@ def _load_spacy(data: t.Mapping[str, t.Any], **kwargs) -> spacy.Language:
     model.add_pipe(
         "concat",
         last=True,
-        config={"models": models, "token_vectors": data["token_vectors"]},
+        config={"models": models},
     )
 
     return model
 
 
-@spacy.Language.factory(
-    "concat", default_config={"models": tuple(), "token_vectors": False}
-)
-class ConcatModel:
-    def __init__(self, nlp, name, models, token_vectors):
-        self._models = models
-        self._token_vectors = token_vectors
+@dataclass
+class _VectorsType:
+    _doc: Doc
 
-    def __call__(self, doc):
-        if len(self._models) > 0 and self._token_vectors:
-            doc.user_hooks["vector"] = self.concat_token_vectors
-            doc.user_span_hooks["vector"] = self.concat_token_vectors
-            doc.user_token_hooks["vector"] = self.concat
-        elif len(self._models) > 0:
-            doc.user_hooks["vector"] = self.concat
-            doc.user_span_hooks["vector"] = self.concat
-            doc.user_token_hooks["vector"] = self.concat
-        elif self._token_vectors:
-            doc.user_hooks["vector"] = self.token_vectors
-            doc.user_span_hooks["vector"] = self.token_vectors
+    @property
+    def document(self):
+        return [vec.tolist() for vec in self._doc._.vectors]
 
-        return doc
+    @property
+    def sentences(self):
+        return [[vec.tolist() for vec in sent._.vectors] for sent in self._doc.sents]
 
-    def token_vectors(self, obj):
-        return [t.vector for t in obj]
-
-    def concat_token_vectors(self, obj):
-        vecs = [[model.vector(t.text) for t in obj] for model in self._models]
-        return [np.concatenate(token_vecs) for token_vecs in vecs]
-
-    def concat(self, obj):
-        vecs = [model.vector(obj.text) for model in self._models]
-        return np.concatenate(vecs)
+    @property
+    def tokens(self):
+        return [[v.tolist() for v in token._.vectors] for token in self._doc]
 
 
-def _convert_vector(
-    vector: t.Union[np.ndarray, t.List[np.ndarray]], token_vectors: bool
-) -> Vector:
-    if isinstance(vector, (list, tuple)):  # Doc, Span
-        return tuple(tuple(v.tolist()) for v in vector)
-    elif token_vectors:  # Token
-        return (tuple(vector.tolist()),)
+@dataclass
+class _VectorType:
+    _doc: Doc
 
-    return tuple(vector.tolist())
+    @property
+    def document(self):
+        return self._doc._.vector.tolist()
+
+    @property
+    def sentences(self):
+        return [sent._.vector.tolist() for sent in self._doc.sents]
+
+    @property
+    def tokens(self):
+        return [token._.vector.tolist() for token in self._doc]
 
 
-class Embedding(graphene.Enum):
+class VectorType(g.ObjectType):
+    document = g.List(g.Float)
+    sentences = g.List(g.List(g.Float))
+    tokens = g.List(g.List(g.Float))
+
+
+class VectorsType(g.ObjectType):
+    document = g.List(g.List(g.Float))
+    sentences = g.List(g.List(g.List(g.Float)))
+    tokens = g.List(g.List(g.List(g.Float)))
+
+
+@dataclass
+class _ModelType:
+    _docs: t.List[Doc]
+    _attrs: t.Optional[t.List[str]]
+
+    @property
+    def docbin(self) -> bytes:
+        models = []
+
+        for doc in self._docs:
+            models.append(doc._.get("concat_model"))
+            doc._.set("concat_model", None)
+
+        if self._attrs is None:
+            out = DocBin(docs=self._docs).to_bytes()
+        else:
+            out = DocBin(self._attrs, docs=self._docs).to_bytes()
+
+        for model, doc in zip(models, self._docs):
+            doc._.set("concat_model", model)
+
+        return out
+
+    @property
+    def vectors(self) -> t.List[_VectorsType]:
+        return [_VectorsType(doc) for doc in self._docs]
+
+    @property
+    def vector(self) -> t.List[_VectorType]:
+        return [_VectorType(doc) for doc in self._docs]
+
+
+class ModelType(g.ObjectType):
+    docbin = g.Base64(required=True)
+    vectors = g.List(VectorsType)
+    vector = g.List(VectorType)
+
+
+class Embedding(g.Enum):
+    SPACY = "spacy"
     USE = "use"
     SENTENCE_TRF = "sentence-trf"
 
 
-class EmbedingType(graphene.InputObjectType):
-    embedding_type = graphene.Field(Embedding, required=True)
-    embedding_model = graphene.String(required=True)
+class EmbedingType(g.InputObjectType):
+    embedding_type = g.Field(Embedding, required=True)
+    embedding_model = g.String(required=True)
 
 
 base_args = {
-    "language": graphene.String(required=True),
-    "spacy_model": graphene.String(required=True),
-    "models": graphene.List(EmbedingType, default_value=tuple()),
-    "token_vectors": graphene.Boolean(default_value=False),
+    "texts": g.List(g.String, required=True),
+    "language": g.String(required=True),
+    "spacy_model": g.String(required=True),
+    "models": g.List(EmbedingType, default_value=tuple()),
 }
 
 
-class VectorType(graphene.ObjectType):
-    document = graphene.List(graphene.Float)
-    sentences = graphene.List(graphene.List(graphene.Float))
-    tokens = graphene.List(graphene.List(graphene.Float))
-
-    @staticmethod
-    def resolve_document(parent, info):
-        return _convert_vector(parent["doc"].vector, parent["token_vectors"])
-
-    @staticmethod
-    def resolve_sentences(parent, info):
-        return [
-            _convert_vector(sentence.vector, parent["token_vectors"])
-            for sentence in parent["doc"].sents
-        ]
-
-    @staticmethod
-    def resolve_tokens(parent, info):
-        return [
-            _convert_vector(token.vector, parent["token_vectors"])
-            for token in parent["doc"]
-        ]
-
-
-class ModelType(graphene.ObjectType):
-    docbin = graphene.String(required=True)
-    vectors = graphene.List(VectorType)
-
-    @staticmethod
-    def resolve_model(parent, info):
-        docbin = DocBin(parent.get("attrs", tuple()))
-
-        for doc in parent["docs"]:
-            docbin.add(doc)
-
-        return b85decode(docbin.to_bytes()).decode("utf-8")
-
-    @staticmethod
-    def resolve_vectors(parent, info):
-        return [
-            {
-                "doc": doc,
-                "token_vectors": parent["token_vectors"],
-            }
-            for doc in parent["docs"]
-        ]
-
-
-class Query(graphene.ObjectType):
-    vectors = graphene.List(
+class Query(g.ObjectType):
+    vectors = g.List(
         VectorType,
-        args={"texts": graphene.List(graphene.String, required=True), **base_args},
+        args={**base_args},
     )
-    models = graphene.Field(
+    models = g.Field(
         ModelType,
         args={
-            "texts": graphene.List(graphene.String, required=True),
-            "attrs": graphene.List(graphene.String),
+            "attrs": g.List(g.String, default_value=None),
             **base_args,
         },
     )
@@ -223,23 +283,13 @@ class Query(graphene.ObjectType):
     @staticmethod
     def resolve_vectors(parent, info, **kwargs):
         nlp = _load_spacy(kwargs, exclude=spacy_components)
-        return [
-            {
-                "doc": doc,
-                "token_vectors": kwargs["token_vectors"],
-            }
-            for doc in nlp.pipe(kwargs["texts"])
-        ]
+        return [_VectorType(doc) for doc in nlp.pipe(kwargs["texts"])]
 
     @staticmethod
     def resolve_models(parent, info, **kwargs):
         nlp = _load_spacy(kwargs)
-        return {
-            "docs": nlp.pipe(kwargs["texts"]),
-            "token_vectors": kwargs["token_vectors"],
-            "attrs": kwargs["attrs"],
-        }
+        return _ModelType(list(nlp.pipe(kwargs["texts"])), kwargs["attrs"])
 
 
 app = FastAPI()
-app.add_route("/", GraphQLApp(schema=graphene.Schema(query=Query)))
+app.add_route("/graphql", GraphQLApp(schema=g.Schema(query=Query)))
