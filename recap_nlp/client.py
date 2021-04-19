@@ -1,26 +1,19 @@
 from __future__ import annotations
 
 import typing as t
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 
 import numpy as np
 import spacy
-from gql import Client, gql
+from gql import Client as GqlClient
+from gql import gql
 from gql.transport.aiohttp import AIOHTTPTransport
 from scipy.spatial import distance
 from spacy.tokens import Doc, DocBin  # type: ignore
 
 from recap_nlp import common
-from recap_nlp.common import BaseQuery
 
-
-def _check_response(r: httpx.Response) -> None:
-    if r.status_code != httpx.codes.OK:
-        raise RuntimeError(r.content)
-
-
-_vector_cache = {}
 Vector = t.Union[np.ndarray, t.Tuple[np.ndarray, ...]]
 
 
@@ -37,58 +30,15 @@ def _convert_vector(
 class Client:
     host: str
     port: int
-    base_query: common.BaseQuery
+    protocol: str = "http"
+    client: GqlClient = field(init=False)
 
-    # Select your transport with a defined url endpoint
-    transport = AIOHTTPTransport(url="https://countries.trevorblades.com/")
+    def __post_init__(self):
+        # Select your transport with a defined url endpoint
+        transport = AIOHTTPTransport(url=f"{self.protocol}://{self.host}:{self.port}")
 
-    # Create a GraphQL client using the defined transport
-    client = Client(transport=transport, fetch_schema_from_transport=True)
-
-    @property
-    def base_url(self) -> str:
-        return f"http://{self.host}:{self.port}"
-
-    def url(self, *parts: str) -> str:
-        return "/".join([self.base_url, *parts])
-
-    def vector(self, text: str) -> Vector:
-        if text not in _vector_cache:
-            response = session.post(
-                self.url("vector"), json={"text": text, **self.base_query.dict()}
-            )
-            _check_response(response)
-
-            _vector_cache[text] = _convert_vector(response.json())
-
-        return _vector_cache[text]
-
-    def vectors(self, texts: t.Iterable[str]) -> t.Tuple[Vector, ...]:
-        unknown_texts = [text for text in texts if text not in _vector_cache]
-
-        if unknown_texts:
-            response = session.post(
-                self.url("vectors"),
-                json={"texts": unknown_texts, **self.base_query.dict()},
-            )
-            _check_response(response)
-
-            for text, vector in zip(unknown_texts, response.json()):
-                _vector_cache[text] = _convert_vector(vector)
-
-        return tuple(_vector_cache[text] for text in texts)
-
-    def model(self, text: str) -> Doc:
-        with session.stream(
-            "POST", self.url("model"), json={"text": text, **self.base_query.dict()}
-        ) as response:
-            _check_response(response)
-            response_bytes = response.read()
-
-        nlp = spacy.blank(self.base_query.language)
-        docbin = DocBin().from_bytes(response_bytes)
-
-        return tuple(docbin.get_docs(nlp.vocab))[0]
+        # Create a GraphQL client using the defined transport
+        self.client = GqlClient(transport=transport, fetch_schema_from_transport=True)
 
     def models(self, texts: t.Iterable[str]) -> t.Tuple[Doc, ...]:
         with session.stream(
@@ -101,6 +51,56 @@ class Client:
         docbin = DocBin().from_bytes(response_bytes)
 
         return tuple(docbin.get_docs(nlp.vocab))
+
+    # def vector(self, text: str) -> Vector:
+    #     if text not in _vector_cache:
+    #         response = session.post(
+    #             self.url("vector"), json={"text": text, **self.base_query.dict()}
+    #         )
+    #         _check_response(response)
+
+    #         _vector_cache[text] = _convert_vector(response.json())
+
+    #     return _vector_cache[text]
+
+    # def vectors(self, texts: t.Iterable[str]) -> t.Tuple[Vector, ...]:
+    #     unknown_texts = [text for text in texts if text not in _vector_cache]
+
+    #     if unknown_texts:
+    #         response = session.post(
+    #             self.url("vectors"),
+    #             json={"texts": unknown_texts, **self.base_query.dict()},
+    #         )
+    #         _check_response(response)
+
+    #         for text, vector in zip(unknown_texts, response.json()):
+    #             _vector_cache[text] = _convert_vector(vector)
+
+    #     return tuple(_vector_cache[text] for text in texts)
+
+    # def model(self, text: str) -> Doc:
+    #     with session.stream(
+    #         "POST", self.url("model"), json={"text": text, **self.base_query.dict()}
+    #     ) as response:
+    #         _check_response(response)
+    #         response_bytes = response.read()
+
+    #     nlp = spacy.blank(self.base_query.language)
+    #     docbin = DocBin().from_bytes(response_bytes)
+
+    #     return tuple(docbin.get_docs(nlp.vocab))[0]
+
+    # def models(self, texts: t.Iterable[str]) -> t.Tuple[Doc, ...]:
+    #     with session.stream(
+    #         "POST", self.url("model"), json={"texts": texts, **self.base_query.dict()}
+    #     ) as response:
+    #         _check_response(response)
+    #         response_bytes = response.read()
+
+    #     nlp = spacy.blank(self.base_query.language)
+    #     docbin = DocBin().from_bytes(response_bytes)
+
+    #     return tuple(docbin.get_docs(nlp.vocab))
 
     def similarity(
         self,
