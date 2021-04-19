@@ -19,8 +19,6 @@ tensorflow = "^2.4.1"
 lemminflect = "^0.2.2"
 gql = {version = "^3.0.0a5", extras = ["aiohttp"], allow-prereleases = true}
 graphene = {version = "^3.0b7", allow-prereleases = true}
-strawberry-graphql = "^0.57.0"
-sanic = "^21.3.2"
 grpcio = "^1.32"
 grpcio-tools = "^1.32"
 
