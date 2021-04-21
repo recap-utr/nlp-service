@@ -19,9 +19,6 @@ from starlette.graphql import GraphQLApp
 
 from recap_nlp import common
 
-Vector = t.Union[t.Tuple[float, ...], t.Tuple[t.Tuple[float, ...], ...]]
-# TODO: Implement pooling strategies
-
 # https://spacy.io/usage/processing-pipelines#built-in
 spacy_components = (
     "tagger",

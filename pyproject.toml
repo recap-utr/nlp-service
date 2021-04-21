@@ -17,10 +17,12 @@ uvicorn = { extras = ["standard"], version = "^0.13.4" }
 textacy = "^0.11.0"
 tensorflow = "^2.4.1"
 lemminflect = "^0.2.2"
-gql = {version = "^3.0.0a5", extras = ["aiohttp"], allow-prereleases = true}
-graphene = {version = "^3.0b7", allow-prereleases = true}
+gql = { version = "^3.0.0a5", extras = ["aiohttp"], allow-prereleases = true }
+graphene = { version = "^3.0b7", allow-prereleases = true }
+grpclib = "^0.4.1"
+betterproto = { version = "^2.0.0b3", allow-prereleases = true }
 grpcio = "^1.32"
-grpcio-tools = "^1.32"
+recap-schema = { path = "../Schema/python", develop = true }
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
