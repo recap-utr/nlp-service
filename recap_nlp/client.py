@@ -2,28 +2,13 @@ from __future__ import annotations
 
 import typing as t
 from dataclasses import dataclass, field
-from datetime import datetime
 
+import grpc
 import numpy as np
 import spacy
-from gql import Client as GqlClient
-from gql import gql
-from gql.transport.aiohttp import AIOHTTPTransport
+from recap_schema.nlp.v1 import nlp_pb2, nlp_pb2_grpc
 from scipy.spatial import distance
 from spacy.tokens import Doc, DocBin  # type: ignore
-
-from recap_nlp import common
-
-Vector = t.Union[np.ndarray, t.Tuple[np.ndarray, ...]]
-
-
-def _convert_vector(
-    vector: t.Union[t.Tuple[t.Tuple[float, ...], ...], t.Tuple[float, ...]]
-) -> Vector:
-    if any(isinstance(i, float) for i in vector):
-        return np.array(vector)
-    else:
-        return tuple(np.array(v) for v in vector)
 
 
 @dataclass
@@ -31,99 +16,18 @@ class Client:
     host: str
     port: int
     protocol: str = "http"
-    client: GqlClient = field(init=False)
+    stub: nlp_pb2_grpc.NLPServiceStub = field(init=False)
 
     def __post_init__(self):
-        # Select your transport with a defined url endpoint
-        transport = AIOHTTPTransport(url=f"{self.protocol}://{self.host}:{self.port}")
+        channel = grpc.insecure_channel(f"{self.host}:{self.port}")
+        self.stub = nlp_pb2_grpc.NLPServiceStub(channel)
 
-        # Create a GraphQL client using the defined transport
-        self.client = GqlClient(transport=transport, fetch_schema_from_transport=True)
 
-    def models(self, texts: t.Iterable[str]) -> t.Tuple[Doc, ...]:
-        with session.stream(
-            "POST", self.url("model"), json={"texts": texts, **self.base_query.dict()}
-        ) as response:
-            _check_response(response)
-            response_bytes = response.read()
+def docbin2doc(self, docbin_bytes: bytes) -> t.Tuple[Doc, ...]:
+    nlp = spacy.blank("en")
+    docbin = DocBin().from_bytes(docbin_bytes)
 
-        nlp = spacy.blank(self.base_query.language)
-        docbin = DocBin().from_bytes(response_bytes)
-
-        return tuple(docbin.get_docs(nlp.vocab))
-
-    # def vector(self, text: str) -> Vector:
-    #     if text not in _vector_cache:
-    #         response = session.post(
-    #             self.url("vector"), json={"text": text, **self.base_query.dict()}
-    #         )
-    #         _check_response(response)
-
-    #         _vector_cache[text] = _convert_vector(response.json())
-
-    #     return _vector_cache[text]
-
-    # def vectors(self, texts: t.Iterable[str]) -> t.Tuple[Vector, ...]:
-    #     unknown_texts = [text for text in texts if text not in _vector_cache]
-
-    #     if unknown_texts:
-    #         response = session.post(
-    #             self.url("vectors"),
-    #             json={"texts": unknown_texts, **self.base_query.dict()},
-    #         )
-    #         _check_response(response)
-
-    #         for text, vector in zip(unknown_texts, response.json()):
-    #             _vector_cache[text] = _convert_vector(vector)
-
-    #     return tuple(_vector_cache[text] for text in texts)
-
-    # def model(self, text: str) -> Doc:
-    #     with session.stream(
-    #         "POST", self.url("model"), json={"text": text, **self.base_query.dict()}
-    #     ) as response:
-    #         _check_response(response)
-    #         response_bytes = response.read()
-
-    #     nlp = spacy.blank(self.base_query.language)
-    #     docbin = DocBin().from_bytes(response_bytes)
-
-    #     return tuple(docbin.get_docs(nlp.vocab))[0]
-
-    # def models(self, texts: t.Iterable[str]) -> t.Tuple[Doc, ...]:
-    #     with session.stream(
-    #         "POST", self.url("model"), json={"texts": texts, **self.base_query.dict()}
-    #     ) as response:
-    #         _check_response(response)
-    #         response_bytes = response.read()
-
-    #     nlp = spacy.blank(self.base_query.language)
-    #     docbin = DocBin().from_bytes(response_bytes)
-
-    #     return tuple(docbin.get_docs(nlp.vocab))
-
-    def similarity(
-        self,
-        obj1: t.Union[str, Vector],
-        obj2: t.Union[str, Vector],
-    ) -> float:
-        if isinstance(obj1, str):
-            obj1 = self.vector(obj1)
-        if isinstance(obj2, str):
-            obj2 = self.vector(obj2)
-
-        if isinstance(obj1, np.ndarray) and isinstance(obj2, np.ndarray):
-            if np.any(obj1) and np.any(obj2):
-                return float(1 - distance.cosine(obj1, obj2))
-            return 0.0
-
-        elif isinstance(obj1, (list, tuple)) and isinstance(obj2, (list, tuple)):
-            return dynamax_jaccard(obj1, obj2)
-
-        else:
-            raise ValueError(
-                "Both vectors must have the same format (either 'np.ndarray' or 'List[np.ndarray]')."
-            )
+    return tuple(docbin.get_docs(nlp.vocab))
 
 
 # https://github.com/babylonhealth/fuzzymax/blob/master/similarity/fuzzy.py

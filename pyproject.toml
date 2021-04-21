@@ -5,29 +5,20 @@ description = ""
 authors = ["Mirko Lenz <info@mirko-lenz.de>"]
 
 [tool.poetry.dependencies]
-sentence-transformers = { version = "^1.0.4", optional = false }
 python = ">=3.8,<3.10"
 numpy = "^1.19.5"
 scipy = "^1.6.2"
 spacy = "^3.0.5"
-fastapi = "^0.63.0"
-tensorflow-hub = "^0.11.0"
 typer = "^0.3.2"
-uvicorn = { extras = ["standard"], version = "^0.13.4" }
-textacy = "^0.11.0"
-tensorflow = "^2.4.1"
-lemminflect = "^0.2.2"
-gql = { version = "^3.0.0a5", extras = ["aiohttp"], allow-prereleases = true }
-graphene = { version = "^3.0b7", allow-prereleases = true }
-grpclib = "^0.4.1"
-betterproto = { version = "^2.0.0b3", allow-prereleases = true }
 grpcio = "^1.32"
 recap-schema = { path = "../Schema/python", develop = true }
+tensorflow = { version = "^2.4.1", optional = true }
+sentence-transformers = { version = "^1.0.4", optional = true }
+tensorflow-hub = { version = "^0.11.0", optional = true }
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
-# [tool.poetry.extras]
-# sbert = ["sentence-transformers"]
-# use = ["tensorflow-hub"]
+[tool.poetry.extras]
+server = ["sentence-transformers", "tensorflow", "tensorflow-hub"]
