@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import contextlib
+import multiprocessing
+import socket
 import typing as t
 from abc import ABC, abstractmethod
 from concurrent import futures
@@ -64,11 +67,12 @@ class UseModel(EmbeddingBase):
 
 class SpacyModel(EmbeddingBase):
     def __init__(self, model: str, pooling: nlp_pb2.Pooling.V):
-        self.model = spacy.load(model, exclude=spacy_components)
+        self.model = spacy.load(model)
         self.pooling = pooling
 
     def vector(self, text: str):
-        doc = self.model(text)
+        with self.model.select_pipes(enable=["senter"]):
+            doc = self.model(text)
 
         if len(doc) > 1 and self.pooling != nlp_pb2.Pooling.POOLING_MEAN_UNSPECIFIED:
             return pool_map[self.pooling]([t.vector for t in doc])
@@ -79,7 +83,13 @@ class SpacyModel(EmbeddingBase):
 @spacy.Language.factory("concat")
 class ConcatModel:
     def __init__(self, nlp, name, models):
-        self.models = models
+        self.models = []
+
+        for model in models:
+            if model not in embedding_cache:
+                embedding_cache[model] = embedding_map[model[0]](*model[1:])
+
+            self.models.append(embedding_cache[model])
 
     def __call__(self, doc):
         if len(self.models) > 0:
@@ -98,30 +108,37 @@ Doc.set_extension("vector", default=None)
 Span.set_extension("vector", default=None)
 Token.set_extension("vector", default=None)
 
+spacy_cache = {}
+embedding_cache = {}
+
+
+def _hash_embedding_model(model: nlp_pb2.EmbeddingModel):
+    return (model.model_type, model.model_name, model.pooling)
+
 
 def _load_spacy(
     language: nlp_pb2.Language.V,
     spacy_model: str,
     embedding_models: t.Iterable[nlp_pb2.EmbeddingModel],
-    **kwargs,
 ) -> spacy.Language:
-    models = []
-
-    if embedding_models:
-        for user_model in embedding_models:
-            tmp_model = embedding_map[user_model.model_type](
-                user_model.model_name, user_model.pooling
-            )
-            models.append(tmp_model)
-
-    model = spacy.load(spacy_model, **kwargs)
-    model.add_pipe(
-        "concat",
-        last=True,
-        config={"models": models},
+    models = tuple(_hash_embedding_model(model) for model in embedding_models)
+    key = (
+        language,
+        spacy_model,
+        models,
     )
 
-    return model
+    if key not in spacy_cache:
+        model = spacy.load(spacy_model)
+        model.add_pipe(
+            "concat",
+            last=True,
+            config={"models": models},
+        )
+
+        spacy_cache[key] = model
+
+    return spacy_cache[key]
 
 
 pool_map = {
@@ -238,16 +255,49 @@ class NlpService(nlp_pb2_grpc.NLPServiceServicer):
 app = typer.Typer()
 
 
-@app.command()
-def run_server(host: str, port: int, workers: int = 1):
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=workers))
+def _run_server(bind_address: str, threads: int):
+    server = grpc.server(
+        futures.ThreadPoolExecutor(max_workers=threads),
+        options=(("grpc.so_reuseport", 1),),
+    )
     nlp_pb2_grpc.add_NLPServiceServicer_to_server(NlpService(), server)
 
-    actual_port = server.add_insecure_port(f"{host}:{port}")
+    server.add_insecure_port(bind_address)
     server.start()
-
-    print(f"Serving on {host}:{actual_port}")
     server.wait_for_termination()
+
+
+@app.command()
+def main(host: str, port: int, processes: int = 1, threads: int = 1):
+    with _reserve_port(port) as actual_port:
+        bind_address = f"{host}:{actual_port}"
+        print(f"Serving on {bind_address}")
+
+        workers = []
+
+        for _ in range(processes):
+            worker = multiprocessing.Process(
+                target=_run_server, args=(bind_address, threads)
+            )
+            worker.start()
+            workers.append(worker)
+
+        for worker in workers:
+            worker.join()
+
+
+@contextlib.contextmanager
+def _reserve_port(port: int = 0):
+    """Find and reserve a port for all subprocesses to use."""
+    sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+    if sock.getsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT) == 0:
+        raise RuntimeError("Failed to set SO_REUSEPORT.")
+    sock.bind(("", port))
+    try:
+        yield sock.getsockname()[1]
+    finally:
+        sock.close()
 
 
 if __name__ == "__main__":

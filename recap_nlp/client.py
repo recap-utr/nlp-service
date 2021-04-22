@@ -8,30 +8,58 @@ import numpy as np
 import spacy
 from recap_schema.nlp.v1 import nlp_pb2, nlp_pb2_grpc
 from scipy.spatial import distance
-from spacy.tokens import Doc, DocBin  # type: ignore
+from spacy.tokens import Doc, DocBin, Span, Token  # type: ignore
+
+Doc.set_extension("vector", default=None)
+Span.set_extension("vector", default=None)
+Token.set_extension("vector", default=None)
 
 
-@dataclass
-class Client:
-    host: str
-    port: int
-    protocol: str = "http"
-    stub: nlp_pb2_grpc.NLPServiceStub = field(init=False)
-
-    def __post_init__(self):
-        channel = grpc.insecure_channel(f"{self.host}:{self.port}")
-        self.stub = nlp_pb2_grpc.NLPServiceStub(channel)
-
-
-def docbin2doc(self, docbin_bytes: bytes) -> t.Tuple[Doc, ...]:
+def docbin2doc(docbin_bytes: bytes) -> t.Tuple[Doc, ...]:
     nlp = spacy.blank("en")
+    add_pipes(nlp)
     docbin = DocBin().from_bytes(docbin_bytes)
 
     return tuple(docbin.get_docs(nlp.vocab))
 
 
+def list2array(values: t.Iterable[float]) -> np.ndarray:
+    return np.array(values)
+
+
+def inject_vectors(
+    doc: Doc,
+    res: nlp_pb2.VectorResponse,
+) -> None:
+    if res.document:
+        doc._.set("vector", list2array(res.document.vector))
+
+    if res.sentences:
+        for sent, sent_res in zip(doc.sents, res.sentences):
+            sent._.set("vector", list2array(sent_res.vector))
+
+    if res.tokens:
+        for token, token_res in zip(doc, res.tokens):
+            token._.set("vector", list2array(token_res.vector))
+
+
+def add_pipes(nlp: spacy.Language) -> None:
+    nlp.add_pipe("vector", last=True)
+
+
+@spacy.Language.component("vector")
+def vector_component(doc):
+    func = lambda x: x._.vector
+
+    doc.user_hooks["vector"] = func
+    doc.user_span_hooks["vector"] = func
+    doc.user_token_hooks["vector"] = func
+
+    return doc
+
+
 # https://github.com/babylonhealth/fuzzymax/blob/master/similarity/fuzzy.py
-def fuzzify(s, u):
+def fuzzify(s, u) -> np.ndarray:
     """
     Sentence fuzzifier.
     Computes membership vector for the sentence S with respect to the
@@ -43,11 +71,11 @@ def fuzzify(s, u):
     f_s = np.dot(s, u.T)
     m_s = np.max(f_s, axis=0)
     m_s = np.maximum(m_s, 0, m_s)
-    return m_s
+    return m_s  # type: ignore
 
 
 # https://github.com/babylonhealth/fuzzymax/blob/master/similarity/fuzzy.py
-def dynamax_jaccard(x, y):
+def dynamax_jaccard(x, y) -> float:
     """
     DynaMax-Jaccard similarity measure between two sentences
     :param x: list of word embeddings for the first sentence
