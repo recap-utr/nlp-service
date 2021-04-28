@@ -7,13 +7,14 @@ import typing as t
 from abc import ABC, abstractmethod
 from concurrent import futures
 
+import arg_services_helper
 import grpc
 import numpy as np
-import recap_schema
 import spacy
 import tensorflow_hub as hub
 import typer
-from recap_schema.nlp.v1 import nlp_pb2, nlp_pb2_grpc
+from arg_services.base.v1 import base_pb2
+from arg_services.nlp.v1 import nlp_pb2, nlp_pb2_grpc
 from sentence_transformers import SentenceTransformer
 from spacy.tokens import Doc, DocBin, Span, Token  # type: ignore
 
@@ -74,7 +75,7 @@ class SpacyModel(EmbeddingBase):
         with self.model.select_pipes(enable=["senter"]):
             doc = self.model(text)
 
-        if len(doc) > 1 and self.pooling != nlp_pb2.Pooling.POOLING_MEAN_UNSPECIFIED:
+        if len(doc) > 1 and self.pooling != nlp_pb2.Pooling.POOLING_MEAN:
             return pool_map[self.pooling]([t.vector for t in doc])
 
         return doc.vector
@@ -117,7 +118,7 @@ def _hash_embedding_model(model: nlp_pb2.EmbeddingModel):
 
 
 def _load_spacy(
-    language: nlp_pb2.Language.V,
+    language: base_pb2.Language.V,
     spacy_model: str,
     embedding_models: t.Iterable[nlp_pb2.EmbeddingModel],
 ) -> spacy.Language:
@@ -142,7 +143,7 @@ def _load_spacy(
 
 
 pool_map = {
-    nlp_pb2.POOLING_MEAN_UNSPECIFIED: np.mean,
+    nlp_pb2.POOLING_MEAN: np.mean,
     nlp_pb2.POOLING_FIRST: lambda vecs: vecs[0],
     nlp_pb2.POOLING_LAST: lambda vecs: vecs[-1],
     nlp_pb2.POOLING_MIN: np.min,
@@ -171,14 +172,21 @@ def check_embedding_models(
     return True
 
 
-class NlpService(nlp_pb2_grpc.NLPServiceServicer):
+class NlpService(nlp_pb2_grpc.NlpServiceServicer):
     def DocBin(
         self,
         req: nlp_pb2.DocBinRequest,
         ctx: grpc.ServicerContext,
     ) -> nlp_pb2.DocBinResponse:
-        recap_schema.check_required(["texts", "spacy_model"], req, ctx)
-        check_embedding_models(req.embedding_models, ctx)
+        arg_services_helper.require(["texts", "spacy_model"], req, ctx)
+
+        for model in req.embedding_models:
+            arg_services_helper.require(
+                ["model_type", "model_name", "pooling"],
+                model,
+                ctx,
+                parent="embedding_models",
+            )
 
         res = nlp_pb2.DocBinResponse()
 
@@ -203,7 +211,7 @@ class NlpService(nlp_pb2_grpc.NLPServiceServicer):
                 res.docbin = DocBin(docs=docs, store_user_data=True).to_bytes()
 
         except Exception as e:
-            recap_schema.grpc_traceback(e, ctx)
+            arg_services_helper.handle_except(e, ctx)
 
         return res
 
@@ -214,10 +222,16 @@ class NlpService(nlp_pb2_grpc.NLPServiceServicer):
     ) -> nlp_pb2.VectorResponse:
         res = nlp_pb2.VectorResponse()
 
-        recap_schema.check_required(
+        arg_services_helper.require(
             ["texts", "spacy_model", "embedding_levels"], req, ctx
         )
-        check_embedding_models(req.embedding_models, ctx)
+        for model in req.embedding_models:
+            arg_services_helper.require(
+                ["model_type", "model_name", "pooling"],
+                model,
+                ctx,
+                parent="embedding_models",
+            )
 
         try:
             nlp = _load_spacy(req.language, req.spacy_model, req.embedding_models)
@@ -239,66 +253,74 @@ class NlpService(nlp_pb2_grpc.NLPServiceServicer):
                             )
 
         except Exception as e:
-            recap_schema.grpc_traceback(e, ctx)
+            arg_services_helper.handle_except(e, ctx)
 
         return res
 
 
-# def _get_open_port() -> int:
-#     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#     s.bind(("", 0))
-#     s.listen(1)
-#     port = s.getsockname()[1]
-#     s.close()
-#     return port
-
 app = typer.Typer()
 
 
-def _run_server(bind_address: str, threads: int):
-    server = grpc.server(
-        futures.ThreadPoolExecutor(max_workers=threads),
-        options=(("grpc.so_reuseport", 1),),
-    )
-    nlp_pb2_grpc.add_NLPServiceServicer_to_server(NlpService(), server)
+def add_services(server: grpc.Server):
+    """Add the services to the grpc server."""
 
-    server.add_insecure_port(bind_address)
-    server.start()
-    server.wait_for_termination()
+    nlp_pb2_grpc.add_NlpServiceServicer_to_server(NlpService(), server)
 
 
 @app.command()
 def main(host: str, port: int, processes: int = 1, threads: int = 1):
-    with _reserve_port(port) as actual_port:
-        bind_address = f"{host}:{actual_port}"
-        print(f"Serving on {bind_address}")
+    """Main entry point for the server."""
 
-        workers = []
-
-        for _ in range(processes):
-            worker = multiprocessing.Process(
-                target=_run_server, args=(bind_address, threads)
-            )
-            worker.start()
-            workers.append(worker)
-
-        for worker in workers:
-            worker.join()
-
-
-@contextlib.contextmanager
-def _reserve_port(port: int = 0):
-    """Find and reserve a port for all subprocesses to use."""
-    sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
-    if sock.getsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT) == 0:
-        raise RuntimeError("Failed to set SO_REUSEPORT.")
-    sock.bind(("", port))
-    try:
-        yield sock.getsockname()[1]
-    finally:
-        sock.close()
+    arg_services_helper.serve(host, port, add_services, processes, threads)
 
 
 if __name__ == "__main__":
     app()
+
+
+# [
+#     "",
+#     "IS_ALPHA",
+#     "IS_ASCII",
+#     "IS_DIGIT",
+#     "IS_LOWER",
+#     "IS_PUNCT",
+#     "IS_SPACE",
+#     "IS_TITLE",
+#     "IS_UPPER",
+#     "LIKE_URL",
+#     "LIKE_NUM",
+#     "LIKE_EMAIL",
+#     "IS_STOP",
+#     "IS_OOV_DEPRECATED",
+#     "IS_BRACKET",
+#     "IS_QUOTE",
+#     "IS_LEFT_PUNCT",
+#     "IS_RIGHT_PUNCT",
+#     "IS_CURRENCY",
+#     "ID",
+#     "ORTH",
+#     "LOWER",
+#     "NORM",
+#     "SHAPE",
+#     "PREFIX",
+#     "SUFFIX",
+#     "LENGTH",
+#     "CLUSTER",
+#     "LEMMA",
+#     "POS",
+#     "TAG",
+#     "DEP",
+#     "ENT_IOB",
+#     "ENT_TYPE",
+#     "ENT_ID",
+#     "ENT_KB_ID",
+#     "HEAD",
+#     "SENT_START",
+#     "SENT_END",
+#     "SPACY",
+#     "PROB",
+#     "LANG",
+#     "MORPH",
+#     "IDX",
+# ]

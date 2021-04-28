@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 import grpc
 import numpy as np
 import spacy
-from recap_schema.nlp.v1 import nlp_pb2, nlp_pb2_grpc
+from arg_services.nlp.v1 import nlp_pb2, nlp_pb2_grpc
 from scipy.spatial import distance
 from spacy.tokens import Doc, DocBin, Span, Token  # type: ignore
 
@@ -17,7 +17,7 @@ Token.set_extension("vector", default=None)
 
 def docbin2doc(docbin_bytes: bytes) -> t.Tuple[Doc, ...]:
     nlp = spacy.blank("en")
-    add_pipes(nlp)
+    inject_pipes(nlp)
     docbin = DocBin().from_bytes(docbin_bytes)
 
     return tuple(docbin.get_docs(nlp.vocab))
@@ -43,7 +43,7 @@ def inject_vectors(
             token._.set("vector", list2array(token_res.vector))
 
 
-def add_pipes(nlp: spacy.Language) -> None:
+def inject_pipes(nlp: spacy.Language) -> None:
     nlp.add_pipe("vector", last=True)
 
 
