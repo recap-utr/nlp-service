@@ -15,8 +15,11 @@ import tensorflow_hub as hub
 import typer
 from arg_services.base.v1 import base_pb2
 from arg_services.nlp.v1 import nlp_pb2, nlp_pb2_grpc
+from scipy.spatial import distance
 from sentence_transformers import SentenceTransformer
 from spacy.tokens import Doc, DocBin, Span, Token  # type: ignore
+
+from recap_nlp import similarity
 
 # https://spacy.io/usage/processing-pipelines#built-in
 spacy_components = (
@@ -158,20 +161,6 @@ embedding_map = {
 }
 
 
-def check_embedding_models(
-    models: t.Iterable[nlp_pb2.EmbeddingModel], context: grpc.ServicerContext
-) -> bool:
-    for model in models:
-        if model.model_type == nlp_pb2.EMBEDDING_TYPE_UNSPECIFIED:
-            context.abort(
-                grpc.StatusCode.INVALID_ARGUMENT,
-                "You have to specify an embedding type.",
-            )
-            return False
-
-    return True
-
-
 class NlpService(nlp_pb2_grpc.NlpServiceServicer):
     def DocBin(
         self,
@@ -225,13 +214,12 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
         arg_services_helper.require(
             ["texts", "spacy_model", "embedding_levels"], req, ctx
         )
-        for model in req.embedding_models:
-            arg_services_helper.require(
-                ["model_type", "model_name", "pooling"],
-                model,
-                ctx,
-                parent="embedding_models",
-            )
+        arg_services_helper.require_repeated(
+            "embedding_models",
+            ["model_type", "model_name", "pooling"],
+            req,
+            ctx,
+        )
 
         try:
             nlp = _load_spacy(req.language, req.spacy_model, req.embedding_models)
@@ -256,6 +244,59 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
             arg_services_helper.handle_except(e, ctx)
 
         return res
+
+    def Similarity(
+        self,
+        req: nlp_pb2.SimilarityRequest,
+        ctx: grpc.ServicerContext,
+    ) -> nlp_pb2.SimilarityResponse:
+        res = nlp_pb2.SimilarityResponse()
+
+        arg_services_helper.require(
+            ["text_tuples", "spacy_model", "similarity_method"], req, ctx
+        )
+        arg_services_helper.require_repeated(
+            "embedding_models",
+            ["model_type", "model_name", "pooling"],
+            req,
+            ctx,
+        )
+        arg_services_helper.require_repeated(
+            "text_tuples",
+            ["text1", "text2"],
+            req,
+            ctx,
+        )
+
+        try:
+            nlp = _load_spacy(req.language, req.spacy_model, req.embedding_models)
+            nlp.add_pipe(
+                "similarity", last=True, config={"method": req.similarity_method}
+            )
+            text_tuples = [(x.text1, x.text2) for x in req.text_tuples]
+            texts1, texts2 = zip(*text_tuples)
+            docs1 = t.cast(t.List[Doc], list(nlp.pipe(texts1)))
+            docs2 = t.cast(t.List[Doc], list(nlp.pipe(texts2)))
+
+            res.similarities.extend(
+                doc1.similarity(doc2) for doc1, doc2 in zip(docs1, docs2)
+            )
+
+        except Exception as e:
+            arg_services_helper.handle_except(e, ctx)
+
+        return res
+
+
+@spacy.Language.factory("similarity")
+def _similarity_factory(doc, method):
+    func = similarity.mapping[method]
+
+    doc.user_hooks["similarity"] = func
+    doc.user_span_hooks["similarity"] = func
+    doc.user_token_hooks["similarity"] = func
+
+    return doc
 
 
 app = typer.Typer()
