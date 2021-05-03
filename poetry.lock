@@ -16,7 +16,7 @@ description = "GraphQL and gRPC schemas for Microservice-based Argumentation Mac
 category = "main"
 optional = false
 python-versions = "^3.6"
-develop = true
+develop = false
 
 [package.dependencies]
 grpcio = "^1.32"
@@ -101,7 +101,7 @@ name = "cython"
 version = "0.29.21"
 description = "The Cython compiler for writing C extensions for the Python language."
 category = "main"
-optional = false
+optional = true
 python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
 
 [[package]]
@@ -133,7 +133,7 @@ name = "gensim"
 version = "4.0.1"
 description = "Python framework for fast Vector Space Modelling"
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.6"
 
 [package.dependencies]
@@ -434,6 +434,17 @@ python-versions = ">=3.6"
 dotenv = ["python-dotenv (>=0.10.4)"]
 email = ["email-validator (>=1.0.3)"]
 typing_extensions = ["typing-extensions (>=3.7.2)"]
+
+[[package]]
+name = "pyemd"
+version = "0.5.1"
+description = "A Python wrapper for Ofir Pele and Michael Werman's implementation of the Earth Mover's Distance."
+category = "main"
+optional = true
+python-versions = "*"
+
+[package.dependencies]
+numpy = ">=1.9.0,<2.0.0"
 
 [[package]]
 name = "pyparsing"
@@ -942,12 +953,12 @@ optional = true
 python-versions = "*"
 
 [extras]
-server = ["sentence-transformers", "tensorflow", "tensorflow-hub"]
+server = ["sentence-transformers", "tensorflow", "tensorflow-hub", "gensim", "typer", "pyemd"]
 
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.10"
-content-hash = "2504a48b22c172ddcc2bf0e32d7197a128fa506229a81c65ffb54294284c3f21"
+content-hash = "e48ebb6af80bb3f7183dc269d024564a8779882324762a0b4912a7c630e0746e"
 
 [metadata.files]
 absl-py = [
@@ -1398,6 +1409,10 @@ pydantic = [
     {file = "pydantic-1.7.3-cp39-cp39-win_amd64.whl", hash = "sha256:475f2fa134cf272d6631072554f845d0630907fce053926ff634cc6bc45bf1af"},
     {file = "pydantic-1.7.3-py3-none-any.whl", hash = "sha256:38be427ea01a78206bcaf9a56f835784afcba9e5b88fbdce33bbbfbcd7841229"},
     {file = "pydantic-1.7.3.tar.gz", hash = "sha256:213125b7e9e64713d16d988d10997dabc6a1f73f3991e1ff8e35ebb1409c7dc9"},
+]
+pyemd = [
+    {file = "pyemd-0.5.1-cp36-cp36m-macosx_10_13_x86_64.whl", hash = "sha256:15750113757ace54a03d2efef7bbc2c5a4782cba30555e7fd401bcafcfa0ecb2"},
+    {file = "pyemd-0.5.1.tar.gz", hash = "sha256:fc81c2116f8573e559dfbb8d73e03d9f73c22d0770559f406516984302e07e70"},
 ]
 pyparsing = [
     {file = "pyparsing-2.4.7-py2.py3-none-any.whl", hash = "sha256:ef9d7589ef3c200abe66653d3f1ab1033c3c419ae9b9bdb1240a85b024efc88b"},

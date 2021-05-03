@@ -1,11 +1,8 @@
 from __future__ import annotations
 
-import contextlib
-import multiprocessing
-import socket
+import sys
 import typing as t
 from abc import ABC, abstractmethod
-from concurrent import futures
 
 import arg_services_helper
 import grpc
@@ -15,11 +12,10 @@ import tensorflow_hub as hub
 import typer
 from arg_services.base.v1 import base_pb2
 from arg_services.nlp.v1 import nlp_pb2, nlp_pb2_grpc
-from scipy.spatial import distance
 from sentence_transformers import SentenceTransformer
 from spacy.tokens import Doc, DocBin, Span, Token  # type: ignore
 
-from recap_nlp import similarity
+from nlp_service import similarity
 
 # https://spacy.io/usage/processing-pipelines#built-in
 spacy_components = (
@@ -85,7 +81,7 @@ class SpacyModel(EmbeddingBase):
 
 
 @spacy.Language.factory("concat")
-class ConcatModel:
+class ConcatFactory:
     def __init__(self, nlp, name, models):
         self.models = []
 
@@ -108,6 +104,19 @@ class ConcatModel:
         return np.concatenate(vecs)
 
 
+@spacy.Language.factory("similarity")
+class SimilarityFactory:
+    def __init__(self, nlp, name, method):
+        self.func = similarity.mapping[method]
+
+    def __call__(self, doc):
+        doc.user_hooks["similarity"] = self.func
+        doc.user_span_hooks["similarity"] = self.func
+        doc.user_token_hooks["similarity"] = self.func
+
+        return doc
+
+
 Doc.set_extension("vector", default=None)
 Span.set_extension("vector", default=None)
 Token.set_extension("vector", default=None)
@@ -121,9 +130,10 @@ def _hash_embedding_model(model: nlp_pb2.EmbeddingModel):
 
 
 def _load_spacy(
-    language: base_pb2.Language.V,
+    language: str,
     spacy_model: str,
     embedding_models: t.Iterable[nlp_pb2.EmbeddingModel],
+    similarity_method: nlp_pb2.SimilarityMethod.V = nlp_pb2.SIMILARITY_METHOD_COSINE,
 ) -> spacy.Language:
     models = tuple(_hash_embedding_model(model) for model in embedding_models)
     key = (
@@ -133,14 +143,15 @@ def _load_spacy(
     )
 
     if key not in spacy_cache:
-        model = spacy.load(spacy_model)
-        model.add_pipe(
+        nlp = spacy.load(spacy_model)
+        nlp.add_pipe(
             "concat",
             last=True,
             config={"models": models},
         )
+        nlp.add_pipe("similarity", last=True, config={"method": similarity_method})
 
-        spacy_cache[key] = model
+        spacy_cache[key] = nlp
 
     return spacy_cache[key]
 
@@ -204,12 +215,12 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
 
         return res
 
-    def Vector(
+    def Vectors(
         self,
-        req: nlp_pb2.VectorRequest,
+        req: nlp_pb2.VectorsRequest,
         ctx: grpc.ServicerContext,
-    ) -> nlp_pb2.VectorResponse:
-        res = nlp_pb2.VectorResponse()
+    ) -> nlp_pb2.VectorsResponse:
+        res = nlp_pb2.VectorsResponse()
 
         arg_services_helper.require(
             ["texts", "spacy_model", "embedding_levels"], req, ctx
@@ -225,32 +236,36 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
             nlp = _load_spacy(req.language, req.spacy_model, req.embedding_models)
             docs = t.cast(t.List[Doc], list(nlp.pipe(req.texts)))
 
-            for level in req.embedding_levels:
-                for doc in docs:
+            for doc in docs:
+                vector_res = nlp_pb2.VectorResponse()
+
+                for level in req.embedding_levels:
                     if level == nlp_pb2.EMBEDDING_LEVEL_DOCUMENT:
-                        res.document.vector.extend(doc.vector.tolist())
+                        vector_res.document.vector.extend(doc.vector.tolist())
                     elif level == nlp_pb2.EMBEDDING_LEVEL_TOKENS:
                         for token in doc:
-                            res.tokens.append(
+                            vector_res.tokens.append(
                                 nlp_pb2.Vector(vector=token.vector.tolist())
                             )
                     elif level == nlp_pb2.EMBEDDING_LEVEL_SENTENCES:
                         for sent in doc.sents:
-                            res.sentences.append(
+                            vector_res.sentences.append(
                                 nlp_pb2.Vector(vector=sent.vector.tolist())
                             )
+
+                res.vectors.append(vector_res)
 
         except Exception as e:
             arg_services_helper.handle_except(e, ctx)
 
         return res
 
-    def Similarity(
+    def Similarities(
         self,
-        req: nlp_pb2.SimilarityRequest,
+        req: nlp_pb2.SimilaritiesRequest,
         ctx: grpc.ServicerContext,
-    ) -> nlp_pb2.SimilarityResponse:
-        res = nlp_pb2.SimilarityResponse()
+    ) -> nlp_pb2.SimilaritiesResponse:
+        res = nlp_pb2.SimilaritiesResponse()
 
         arg_services_helper.require(
             ["text_tuples", "spacy_model", "similarity_method"], req, ctx
@@ -269,9 +284,11 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
         )
 
         try:
-            nlp = _load_spacy(req.language, req.spacy_model, req.embedding_models)
-            nlp.add_pipe(
-                "similarity", last=True, config={"method": req.similarity_method}
+            nlp = _load_spacy(
+                req.language,
+                req.spacy_model,
+                req.embedding_models,
+                req.similarity_method,
             )
             text_tuples = [(x.text1, x.text2) for x in req.text_tuples]
             texts1, texts2 = zip(*text_tuples)
@@ -286,17 +303,6 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
             arg_services_helper.handle_except(e, ctx)
 
         return res
-
-
-@spacy.Language.factory("similarity")
-def _similarity_factory(doc, method):
-    func = similarity.mapping[method]
-
-    doc.user_hooks["similarity"] = func
-    doc.user_span_hooks["similarity"] = func
-    doc.user_token_hooks["similarity"] = func
-
-    return doc
 
 
 app = typer.Typer()
