@@ -16,7 +16,7 @@ description = "GraphQL and gRPC schemas for Microservice-based Argumentation Mac
 category = "main"
 optional = false
 python-versions = "^3.6"
-develop = false
+develop = true
 
 [package.dependencies]
 grpcio = "^1.32"
@@ -453,6 +453,14 @@ description = "Python parsing module"
 category = "main"
 optional = false
 python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
+
+[[package]]
+name = "python-levenshtein"
+version = "0.12.2"
+description = "Python extension for computing string edit distances and similarities."
+category = "main"
+optional = true
+python-versions = "*"
 
 [[package]]
 name = "regex"
@@ -953,12 +961,12 @@ optional = true
 python-versions = "*"
 
 [extras]
-server = ["sentence-transformers", "tensorflow", "tensorflow-hub", "gensim", "typer", "pyemd"]
+server = ["sentence-transformers", "tensorflow", "tensorflow-hub", "gensim", "python-Levenshtein", "typer", "pyemd"]
 
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.10"
-content-hash = "e48ebb6af80bb3f7183dc269d024564a8779882324762a0b4912a7c630e0746e"
+content-hash = "7656fe16b77e32edd126cedb17b3a0285a67308d8dbfc83e6b85567cf10ba7c0"
 
 [metadata.files]
 absl-py = [
@@ -1417,6 +1425,9 @@ pyemd = [
 pyparsing = [
     {file = "pyparsing-2.4.7-py2.py3-none-any.whl", hash = "sha256:ef9d7589ef3c200abe66653d3f1ab1033c3c419ae9b9bdb1240a85b024efc88b"},
     {file = "pyparsing-2.4.7.tar.gz", hash = "sha256:c203ec8783bf771a155b207279b9bccb8dea02d8f0c9e5f8ead507bc3246ecc1"},
+]
+python-levenshtein = [
+    {file = "python-Levenshtein-0.12.2.tar.gz", hash = "sha256:dc2395fbd148a1ab31090dd113c366695934b9e85fe5a4b2a032745efd0346f6"},
 ]
 regex = [
     {file = "regex-2021.4.4-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:619d71c59a78b84d7f18891fe914446d07edd48dc8328c8e149cbe0929b4e000"},

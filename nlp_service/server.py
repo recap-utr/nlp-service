@@ -178,7 +178,7 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
         req: nlp_pb2.DocBinRequest,
         ctx: grpc.ServicerContext,
     ) -> nlp_pb2.DocBinResponse:
-        arg_services_helper.require(["texts", "spacy_model"], req, ctx)
+        arg_services_helper.require(["spacy_model"], req, ctx)
 
         for model in req.embedding_models:
             arg_services_helper.require(
@@ -222,9 +222,7 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
     ) -> nlp_pb2.VectorsResponse:
         res = nlp_pb2.VectorsResponse()
 
-        arg_services_helper.require(
-            ["texts", "spacy_model", "embedding_levels"], req, ctx
-        )
+        arg_services_helper.require(["spacy_model", "embedding_levels"], req, ctx)
         arg_services_helper.require_repeated(
             "embedding_models",
             ["model_type", "model_name", "pooling"],
@@ -267,9 +265,7 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
     ) -> nlp_pb2.SimilaritiesResponse:
         res = nlp_pb2.SimilaritiesResponse()
 
-        arg_services_helper.require(
-            ["text_tuples", "spacy_model", "similarity_method"], req, ctx
-        )
+        arg_services_helper.require(["spacy_model", "similarity_method"], req, ctx)
         arg_services_helper.require_repeated(
             "embedding_models",
             ["model_type", "model_name", "pooling"],
