@@ -192,7 +192,13 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
 
         try:
             nlp = _load_spacy(req.language, req.spacy_model, req.embedding_models)
-            docs = t.cast(t.List[Doc], list(nlp.pipe(req.texts)))
+            nlp_args = {}
+
+            if req.no_attributes:
+                nlp_args["enable"] = []
+
+            with nlp.select_pipes(**nlp_args):
+                docs = t.cast(t.List[Doc], list(nlp.pipe(req.texts)))
 
             if levels := req.embedding_levels:
                 for doc in docs:
@@ -207,6 +213,8 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
 
             if attrs := req.attributes:
                 res.docbin = DocBin(attrs, docs=docs, store_user_data=True).to_bytes()
+            elif req.no_attributes:
+                res.docbin = DocBin([], docs=docs, store_user_data=True).to_bytes()
             else:
                 res.docbin = DocBin(docs=docs, store_user_data=True).to_bytes()
 
@@ -232,7 +240,9 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
 
         try:
             nlp = _load_spacy(req.language, req.spacy_model, req.embedding_models)
-            docs = t.cast(t.List[Doc], list(nlp.pipe(req.texts)))
+
+            with nlp.select_pipes(enable=[]):
+                docs = t.cast(t.List[Doc], list(nlp.pipe(req.texts)))
 
             for doc in docs:
                 vector_res = nlp_pb2.VectorResponse()
@@ -288,8 +298,10 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
             )
             text_tuples = [(x.text1, x.text2) for x in req.text_tuples]
             texts1, texts2 = zip(*text_tuples)
-            docs1 = t.cast(t.List[Doc], list(nlp.pipe(texts1)))
-            docs2 = t.cast(t.List[Doc], list(nlp.pipe(texts2)))
+
+            with nlp.select_pipes(enable=[]):
+                docs1 = t.cast(t.List[Doc], list(nlp.pipe(texts1)))
+                docs2 = t.cast(t.List[Doc], list(nlp.pipe(texts2)))
 
             res.similarities.extend(
                 doc1.similarity(doc2) for doc1, doc2 in zip(docs1, docs2)
