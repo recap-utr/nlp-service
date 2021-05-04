@@ -179,6 +179,9 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
         ctx: grpc.ServicerContext,
     ) -> nlp_pb2.DocBinResponse:
         arg_services_helper.require(["spacy_model"], req, ctx)
+        arg_services_helper.illegal_combination(
+            ["attributes", "no_attributes"], req, ctx
+        )
 
         for model in req.embedding_models:
             arg_services_helper.require(
@@ -190,36 +193,32 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
 
         res = nlp_pb2.DocBinResponse()
 
-        try:
-            nlp = _load_spacy(req.language, req.spacy_model, req.embedding_models)
-            nlp_args = {}
+        nlp = _load_spacy(req.language, req.spacy_model, req.embedding_models)
+        nlp_args = {"disable": []}
 
-            if req.no_attributes:
-                nlp_args["enable"] = []
+        if req.no_attributes:
+            nlp_args = {"enable": []}
 
-            with nlp.select_pipes(**nlp_args):
-                docs = t.cast(t.List[Doc], list(nlp.pipe(req.texts)))
+        with nlp.select_pipes(**nlp_args):
+            docs = t.cast(t.List[Doc], list(nlp.pipe(req.texts)))
 
-            if levels := req.embedding_levels:
-                for doc in docs:
-                    if nlp_pb2.EMBEDDING_LEVEL_DOCUMENT in levels:
-                        doc._.set("vector", doc.vector)
-                    if nlp_pb2.EMBEDDING_LEVEL_TOKENS in levels:
-                        for token in doc:
-                            token._.set("vector", token.vector)
-                    if nlp_pb2.EMBEDDING_LEVEL_SENTENCES in levels:
-                        for sent in doc.sents:
-                            sent._.set("vector", sent.vector)
+        if levels := req.embedding_levels:
+            for doc in docs:
+                if nlp_pb2.EMBEDDING_LEVEL_DOCUMENT in levels:
+                    doc._.set("vector", doc.vector)
+                if nlp_pb2.EMBEDDING_LEVEL_TOKENS in levels:
+                    for token in doc:
+                        token._.set("vector", token.vector)
+                if nlp_pb2.EMBEDDING_LEVEL_SENTENCES in levels:
+                    for sent in doc.sents:
+                        sent._.set("vector", sent.vector)
 
-            if attrs := req.attributes:
-                res.docbin = DocBin(attrs, docs=docs, store_user_data=True).to_bytes()
-            elif req.no_attributes:
-                res.docbin = DocBin([], docs=docs, store_user_data=True).to_bytes()
-            else:
-                res.docbin = DocBin(docs=docs, store_user_data=True).to_bytes()
-
-        except Exception as e:
-            arg_services_helper.handle_except(e, ctx)
+        if attrs := req.attributes:
+            res.docbin = DocBin(attrs, docs=docs, store_user_data=True).to_bytes()
+        elif req.no_attributes:
+            res.docbin = DocBin([], docs=docs, store_user_data=True).to_bytes()
+        else:
+            res.docbin = DocBin(docs=docs, store_user_data=True).to_bytes()
 
         return res
 
@@ -238,33 +237,29 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
             ctx,
         )
 
-        try:
-            nlp = _load_spacy(req.language, req.spacy_model, req.embedding_models)
+        nlp = _load_spacy(req.language, req.spacy_model, req.embedding_models)
 
-            with nlp.select_pipes(enable=[]):
-                docs = t.cast(t.List[Doc], list(nlp.pipe(req.texts)))
+        with nlp.select_pipes(enable=[]):
+            docs = t.cast(t.List[Doc], list(nlp.pipe(req.texts)))
 
-            for doc in docs:
-                vector_res = nlp_pb2.VectorResponse()
+        for doc in docs:
+            vector_res = nlp_pb2.VectorResponse()
 
-                for level in req.embedding_levels:
-                    if level == nlp_pb2.EMBEDDING_LEVEL_DOCUMENT:
-                        vector_res.document.vector.extend(doc.vector.tolist())
-                    elif level == nlp_pb2.EMBEDDING_LEVEL_TOKENS:
-                        for token in doc:
-                            vector_res.tokens.append(
-                                nlp_pb2.Vector(vector=token.vector.tolist())
-                            )
-                    elif level == nlp_pb2.EMBEDDING_LEVEL_SENTENCES:
-                        for sent in doc.sents:
-                            vector_res.sentences.append(
-                                nlp_pb2.Vector(vector=sent.vector.tolist())
-                            )
+            for level in req.embedding_levels:
+                if level == nlp_pb2.EMBEDDING_LEVEL_DOCUMENT:
+                    vector_res.document.vector.extend(doc.vector.tolist())
+                elif level == nlp_pb2.EMBEDDING_LEVEL_TOKENS:
+                    for token in doc:
+                        vector_res.tokens.append(
+                            nlp_pb2.Vector(vector=token.vector.tolist())
+                        )
+                elif level == nlp_pb2.EMBEDDING_LEVEL_SENTENCES:
+                    for sent in doc.sents:
+                        vector_res.sentences.append(
+                            nlp_pb2.Vector(vector=sent.vector.tolist())
+                        )
 
-                res.vectors.append(vector_res)
-
-        except Exception as e:
-            arg_services_helper.handle_except(e, ctx)
+            res.vectors.append(vector_res)
 
         return res
 
@@ -289,26 +284,22 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
             ctx,
         )
 
-        try:
-            nlp = _load_spacy(
-                req.language,
-                req.spacy_model,
-                req.embedding_models,
-                req.similarity_method,
-            )
-            text_tuples = [(x.text1, x.text2) for x in req.text_tuples]
-            texts1, texts2 = zip(*text_tuples)
+        nlp = _load_spacy(
+            req.language,
+            req.spacy_model,
+            req.embedding_models,
+            req.similarity_method,
+        )
+        text_tuples = [(x.text1, x.text2) for x in req.text_tuples]
+        texts1, texts2 = zip(*text_tuples)
 
-            with nlp.select_pipes(enable=[]):
-                docs1 = t.cast(t.List[Doc], list(nlp.pipe(texts1)))
-                docs2 = t.cast(t.List[Doc], list(nlp.pipe(texts2)))
+        with nlp.select_pipes(enable=[]):
+            docs1 = t.cast(t.List[Doc], list(nlp.pipe(texts1)))
+            docs2 = t.cast(t.List[Doc], list(nlp.pipe(texts2)))
 
-            res.similarities.extend(
-                doc1.similarity(doc2) for doc1, doc2 in zip(docs1, docs2)
-            )
-
-        except Exception as e:
-            arg_services_helper.handle_except(e, ctx)
+        res.similarities.extend(
+            doc1.similarity(doc2) for doc1, doc2 in zip(docs1, docs2)
+        )
 
         return res
 
