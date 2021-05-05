@@ -33,6 +33,7 @@ spacy_components = (
     "sentencizer",
     # tok2vec, transformer
 )
+custom_components = ("concat", "similarity")
 
 
 class EmbeddingBase(ABC):
@@ -71,10 +72,10 @@ class SpacyModel(EmbeddingBase):
         self.pooling = pooling
 
     def vector(self, text: str):
-        with self.model.select_pipes(enable=["senter"]):
-            doc = self.model(text)
+        # with self.model.select_pipes(enable=["senter"]):
+        doc = self.model(text)
 
-        if len(doc) > 1 and self.pooling != nlp_pb2.Pooling.POOLING_MEAN:
+        if len(doc) > 1 and self.pooling != nlp_pb2.POOLING_MEAN:
             return pool_map[self.pooling]([t.vector for t in doc])
 
         return doc.vector
@@ -117,9 +118,9 @@ class SimilarityFactory:
         return doc
 
 
-Doc.set_extension("vector", default=None)
-Span.set_extension("vector", default=None)
-Token.set_extension("vector", default=None)
+# Doc.set_extension("vector", default=None)
+# Span.set_extension("vector", default=None)
+# Token.set_extension("vector", default=None)
 
 spacy_cache = {}
 embedding_cache = {}
@@ -143,13 +144,17 @@ def _load_spacy(
     )
 
     if key not in spacy_cache:
-        nlp = spacy.load(spacy_model)
-        nlp.add_pipe(
-            "concat",
-            last=True,
-            config={"models": models},
-        )
-        nlp.add_pipe("similarity", last=True, config={"method": similarity_method})
+        nlp = spacy.load(spacy_model) if spacy_model else spacy.blank(language)
+
+        if models:
+            nlp.add_pipe(
+                "concat",
+                last=True,
+                config={"models": models},
+            )
+
+        if similarity_method != nlp_pb2.SIMILARITY_METHOD_COSINE:
+            nlp.add_pipe("similarity", last=True, config={"method": similarity_method})
 
         spacy_cache[key] = nlp
 
@@ -178,13 +183,11 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
         req: nlp_pb2.DocBinRequest,
         ctx: grpc.ServicerContext,
     ) -> nlp_pb2.DocBinResponse:
-        arg_services_helper.require(["spacy_model"], req, ctx)
-        arg_services_helper.illegal_combination(
-            ["attributes", "no_attributes"], req, ctx
-        )
+        arg_services_helper.require_all(["language"], req, ctx)
+        arg_services_helper.forbid_all(["attributes", "no_attributes"], req, ctx)
 
         for model in req.embedding_models:
-            arg_services_helper.require(
+            arg_services_helper.require_all(
                 ["model_type", "model_name", "pooling"],
                 model,
                 ctx,
@@ -197,10 +200,10 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
         nlp_args = {"disable": []}
 
         if req.no_attributes:
-            nlp_args = {"enable": []}
+            nlp_args = {"enable": custom_components}
 
-        with nlp.select_pipes(**nlp_args):
-            docs = t.cast(t.List[Doc], list(nlp.pipe(req.texts)))
+        # with nlp.select_pipes(**nlp_args):
+        docs = t.cast(t.List[Doc], list(nlp.pipe(req.texts)))
 
         if levels := req.embedding_levels:
             for doc in docs:
@@ -229,8 +232,8 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
     ) -> nlp_pb2.VectorsResponse:
         res = nlp_pb2.VectorsResponse()
 
-        arg_services_helper.require(["spacy_model", "embedding_levels"], req, ctx)
-        arg_services_helper.require_repeated(
+        arg_services_helper.require_all(["language", "embedding_levels"], req, ctx)
+        arg_services_helper.require_all_repeated(
             "embedding_models",
             ["model_type", "model_name", "pooling"],
             req,
@@ -239,8 +242,8 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
 
         nlp = _load_spacy(req.language, req.spacy_model, req.embedding_models)
 
-        with nlp.select_pipes(enable=[]):
-            docs = t.cast(t.List[Doc], list(nlp.pipe(req.texts)))
+        # with nlp.select_pipes(enable=custom_components):
+        docs = t.cast(t.List[Doc], list(nlp.pipe(req.texts)))
 
         for doc in docs:
             vector_res = nlp_pb2.VectorResponse()
@@ -270,14 +273,14 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
     ) -> nlp_pb2.SimilaritiesResponse:
         res = nlp_pb2.SimilaritiesResponse()
 
-        arg_services_helper.require(["spacy_model", "similarity_method"], req, ctx)
-        arg_services_helper.require_repeated(
+        arg_services_helper.require_all(["language", "similarity_method"], req, ctx)
+        arg_services_helper.require_all_repeated(
             "embedding_models",
             ["model_type", "model_name", "pooling"],
             req,
             ctx,
         )
-        arg_services_helper.require_repeated(
+        arg_services_helper.require_all_repeated(
             "text_tuples",
             ["text1", "text2"],
             req,
@@ -293,9 +296,9 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
         text_tuples = [(x.text1, x.text2) for x in req.text_tuples]
         texts1, texts2 = zip(*text_tuples)
 
-        with nlp.select_pipes(enable=[]):
-            docs1 = t.cast(t.List[Doc], list(nlp.pipe(texts1)))
-            docs2 = t.cast(t.List[Doc], list(nlp.pipe(texts2)))
+        # with nlp.select_pipes(enable=custom_components):
+        docs1 = t.cast(t.List[Doc], list(nlp.pipe(texts1)))
+        docs2 = t.cast(t.List[Doc], list(nlp.pipe(texts2)))
 
         res.similarities.extend(
             doc1.similarity(doc2) for doc1, doc2 in zip(docs1, docs2)

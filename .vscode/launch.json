@@ -5,19 +5,11 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Python: Module",
+      "name": "NLP Server",
       "type": "python",
       "request": "launch",
-      "module": "recap_nlp.server",
-      "args": ["127.0.0.1", "0"]
-    },
-    {
-      "name": "Python: FastAPI",
-      "type": "python",
-      "request": "launch",
-      "module": "uvicorn",
-      "args": ["recap_nlp.server:app"],
-      "jinja": true
+      "module": "nlp_service.server",
+      "args": ["127.0.0.1", "5001"]
     }
   ]
 }
