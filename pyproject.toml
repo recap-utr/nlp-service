@@ -14,6 +14,7 @@ numpy = "^1.19.5"
 scipy = "^1.6.2"
 spacy = "^3.0.5"
 grpcio = "^1.32"
+arg-services = "^0.1.7"
 tensorflow = { version = "^2.4.1", optional = true }
 sentence-transformers = { version = "^1.0.4", optional = true }
 tensorflow-hub = { version = "^0.11.0", optional = true }
@@ -21,7 +22,6 @@ gensim = { version = "^4.0.1", optional = true }
 pyemd = { version = "^0.5.1", optional = true }
 typer = { version = "^0.3.2", optional = true }
 python-Levenshtein = { version = "^0.12.2", optional = true }
-arg-services = { path = "../Schema/python", develop = true }
 torch = { version = "^1.8.1", optional = true }
 
 [build-system]

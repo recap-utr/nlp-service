@@ -11,20 +11,15 @@ six = "*"
 
 [[package]]
 name = "arg-services"
-version = "0.1.6"
+version = "0.1.7"
 description = "GraphQL and gRPC schemas for Microservice-based Argumentation Machines."
 category = "main"
 optional = false
-python-versions = "^3.6"
-develop = true
+python-versions = ">=3.6,<4.0"
 
 [package.dependencies]
-grpcio = "^1.32"
-protobuf = "^3.15.8"
-
-[package.source]
-type = "directory"
-url = "../Schema/python"
+grpcio = ">=1.32,<2.0"
+protobuf = ">=3.15.8,<4.0.0"
 
 [[package]]
 name = "astunparse"
@@ -700,7 +695,7 @@ werkzeug = ">=0.11.15"
 
 [[package]]
 name = "tensorboard-data-server"
-version = "0.6.0"
+version = "0.6.1"
 description = "Fast data loading for TensorBoard"
 category = "main"
 optional = true
@@ -832,7 +827,7 @@ name = "torch"
 version = "1.8.1"
 description = "Tensors and Dynamic neural networks in Python with strong GPU acceleration"
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.6.2"
 
 [package.dependencies]
@@ -916,7 +911,7 @@ name = "typing-extensions"
 version = "3.7.4.3"
 description = "Backported and Experimental Type Hints for Python 3.5+"
 category = "main"
-optional = false
+optional = true
 python-versions = "*"
 
 [[package]]
@@ -961,19 +956,22 @@ optional = true
 python-versions = "*"
 
 [extras]
-server = ["sentence-transformers", "tensorflow", "tensorflow-hub", "gensim", "python-Levenshtein", "typer", "pyemd"]
+server = ["sentence-transformers", "tensorflow", "tensorflow-hub", "gensim", "python-Levenshtein", "typer", "pyemd", "torch"]
 
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.10"
-content-hash = "3e8fc65bf1c70c7a067e325cd4eb2d8691ff78152b5d138f91cc4151a7e5fc28"
+content-hash = "170c5cff1e92bbd659a54869f9e8d7fa8564400b7949f4089d9472895d73eb5d"
 
 [metadata.files]
 absl-py = [
     {file = "absl-py-0.12.0.tar.gz", hash = "sha256:b44f68984a5ceb2607d135a615999b93924c771238a63920d17d3387b0d229d5"},
     {file = "absl_py-0.12.0-py3-none-any.whl", hash = "sha256:afe94e3c751ff81aad55d33ab6e630390da32780110b5af72ae81ecff8418d9e"},
 ]
-arg-services = []
+arg-services = [
+    {file = "arg-services-0.1.7.tar.gz", hash = "sha256:36be7f432a2ad755befe35b5ec93a053e7d56e4c0c8a2359064fdb4fc8c5f5b8"},
+    {file = "arg_services-0.1.7-py3-none-any.whl", hash = "sha256:742eeee45e22f65b1fe3839c738488df2450ab3423048268d7de48831283a0d2"},
+]
 astunparse = [
     {file = "astunparse-1.6.3-py2.py3-none-any.whl", hash = "sha256:c2652417f2c8b5bb325c885ae329bdf3f86424075c4fd1a128674bc6fba4b8e8"},
     {file = "astunparse-1.6.3.tar.gz", hash = "sha256:5ad93a8456f0d084c3456d059fd9a92cce667963232cbf763eac3bc5b7940872"},
@@ -1634,9 +1632,9 @@ tensorboard = [
     {file = "tensorboard-2.5.0-py3-none-any.whl", hash = "sha256:e167460085b6528956b33bab1c970c989cdce47a6616273880733f5e7bde452e"},
 ]
 tensorboard-data-server = [
-    {file = "tensorboard_data_server-0.6.0-py3-none-any.whl", hash = "sha256:a4b8e1c3fc85237b3afeef450db06c9a9b25f5854ad27c21667a90808acd1822"},
-    {file = "tensorboard_data_server-0.6.0-py3-none-macosx_10_9_x86_64.whl", hash = "sha256:2d723d73e3a3b0a4498f56c64c39e2e26ac192414891df22c9f152b7058fd6bc"},
-    {file = "tensorboard_data_server-0.6.0-py3-none-manylinux2010_x86_64.whl", hash = "sha256:b620e520d3d535ceb896557acca0029fd7fd2f9f408af35abc2d2dad91f0345d"},
+    {file = "tensorboard_data_server-0.6.1-py3-none-any.whl", hash = "sha256:809fe9887682d35c1f7d1f54f0f40f98bb1f771b14265b453ca051e2ce58fca7"},
+    {file = "tensorboard_data_server-0.6.1-py3-none-macosx_10_9_x86_64.whl", hash = "sha256:fa8cef9be4fcae2f2363c88176638baf2da19c5ec90addb49b1cde05c95c88ee"},
+    {file = "tensorboard_data_server-0.6.1-py3-none-manylinux2010_x86_64.whl", hash = "sha256:d8237580755e58eff68d1f3abefb5b1e39ae5c8b127cc40920f9c4fb33f4b98a"},
 ]
 tensorboard-plugin-wit = [
     {file = "tensorboard_plugin_wit-1.8.0-py3-none-any.whl", hash = "sha256:2a80d1c551d741e99b2f197bb915d8a133e24adb8da1732b840041860f91183a"},
