@@ -9,7 +9,7 @@
       "type": "python",
       "request": "launch",
       "module": "nlp_service.server",
-      "args": ["127.0.0.1", "5001"]
+      "args": ["127.0.0.1", "5001", "5002"]
     }
   ]
 }

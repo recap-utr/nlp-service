@@ -15,11 +15,16 @@ version = "0.1.7"
 description = "GraphQL and gRPC schemas for Microservice-based Argumentation Machines."
 category = "main"
 optional = false
-python-versions = ">=3.6,<4.0"
+python-versions = "^3.6"
+develop = true
 
 [package.dependencies]
-grpcio = ">=1.32,<2.0"
-protobuf = ">=3.15.8,<4.0.0"
+grpcio = "^1.32"
+protobuf = "^3.15.8"
+
+[package.source]
+type = "directory"
+url = "../Schema/python"
 
 [[package]]
 name = "astunparse"
@@ -961,17 +966,14 @@ server = ["sentence-transformers", "tensorflow", "tensorflow-hub", "gensim", "py
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.10"
-content-hash = "170c5cff1e92bbd659a54869f9e8d7fa8564400b7949f4089d9472895d73eb5d"
+content-hash = "5ab6a978ba1bcfdc38fea15a907110cac7fbcb55278f16de7695e631352755a1"
 
 [metadata.files]
 absl-py = [
     {file = "absl-py-0.12.0.tar.gz", hash = "sha256:b44f68984a5ceb2607d135a615999b93924c771238a63920d17d3387b0d229d5"},
     {file = "absl_py-0.12.0-py3-none-any.whl", hash = "sha256:afe94e3c751ff81aad55d33ab6e630390da32780110b5af72ae81ecff8418d9e"},
 ]
-arg-services = [
-    {file = "arg-services-0.1.7.tar.gz", hash = "sha256:36be7f432a2ad755befe35b5ec93a053e7d56e4c0c8a2359064fdb4fc8c5f5b8"},
-    {file = "arg_services-0.1.7-py3-none-any.whl", hash = "sha256:742eeee45e22f65b1fe3839c738488df2450ab3423048268d7de48831283a0d2"},
-]
+arg-services = []
 astunparse = [
     {file = "astunparse-1.6.3-py2.py3-none-any.whl", hash = "sha256:c2652417f2c8b5bb325c885ae329bdf3f86424075c4fd1a128674bc6fba4b8e8"},
     {file = "astunparse-1.6.3.tar.gz", hash = "sha256:5ad93a8456f0d084c3456d059fd9a92cce667963232cbf763eac3bc5b7940872"},

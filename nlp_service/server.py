@@ -321,10 +321,10 @@ def add_services(server: grpc.Server):
 
 
 @app.command()
-def main(host: str, port: int, processes: int = 1, threads: int = 1):
+def main(host: str, ports: t.List[int], threads: int = 1):
     """Main entry point for the server."""
 
-    arg_services_helper.serve(host, port, add_services, processes, threads)
+    arg_services_helper.serve(host, ports, add_services, threads)
 
 
 if __name__ == "__main__":
