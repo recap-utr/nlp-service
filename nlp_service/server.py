@@ -35,6 +35,10 @@ spacy_components = (
 )
 custom_components = ("concat", "similarity")
 
+# TODO: Extract spacy-specific code into its own file.
+# Benefit: We could refactor the code s.t. the spacy `nlp` object can be
+# imported directly in python applications (eliminating the need to use a server).
+
 
 class EmbeddingBase(ABC):
     @abstractmethod
