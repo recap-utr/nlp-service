@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import asyncio
 import sys
 import typing as t
 from abc import ABC, abstractmethod
 
 import arg_services_helper
-import grpc
+import grpc.aio
 import numpy as np
 import spacy
 import tensorflow_hub as hub
@@ -34,6 +35,7 @@ spacy_components = (
     # tok2vec, transformer
 )
 custom_components = ("concat", "similarity")
+# custom_components = []
 
 # TODO: Extract spacy-specific code into its own file.
 # Benefit: We could refactor the code s.t. the spacy `nlp` object can be
@@ -76,8 +78,8 @@ class SpacyModel(EmbeddingBase):
         self.pooling = pooling
 
     def vector(self, text: str):
-        # with self.model.select_pipes(enable=["senter"]):
-        doc = self.model(text)
+        with self.model.select_pipes(enable=["senter"]):
+            doc = self.model(text)
 
         if len(doc) > 1 and self.pooling != nlp_pb2.POOLING_MEAN:
             return pool_map[self.pooling]([t.vector for t in doc])
@@ -182,10 +184,10 @@ embedding_map = {
 
 
 class NlpService(nlp_pb2_grpc.NlpServiceServicer):
-    def DocBin(
+    async def DocBin(
         self,
         req: nlp_pb2.DocBinRequest,
-        ctx: grpc.ServicerContext,
+        ctx: grpc.aio.ServicerContext,
     ) -> nlp_pb2.DocBinResponse:
         arg_services_helper.require_all(["language"], req, ctx)
         arg_services_helper.forbid_all(["attributes", "no_attributes"], req, ctx)
@@ -206,8 +208,8 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
         if req.no_attributes:
             nlp_args = {"enable": custom_components}
 
-        # with nlp.select_pipes(**nlp_args):
-        docs = t.cast(t.List[Doc], list(nlp.pipe(req.texts)))
+        with nlp.select_pipes(**nlp_args):
+            docs = t.cast(t.List[Doc], list(nlp.pipe(req.texts)))
 
         if levels := req.embedding_levels:
             for doc in docs:
@@ -229,10 +231,10 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
 
         return res
 
-    def Vectors(
+    async def Vectors(
         self,
         req: nlp_pb2.VectorsRequest,
-        ctx: grpc.ServicerContext,
+        ctx: grpc.aio.ServicerContext,
     ) -> nlp_pb2.VectorsResponse:
         res = nlp_pb2.VectorsResponse()
 
@@ -246,8 +248,8 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
 
         nlp = _load_spacy(req.language, req.spacy_model, req.embedding_models)
 
-        # with nlp.select_pipes(enable=custom_components):
-        docs = t.cast(t.List[Doc], list(nlp.pipe(req.texts)))
+        with nlp.select_pipes(enable=custom_components):
+            docs = t.cast(t.List[Doc], list(nlp.pipe(req.texts)))
 
         for doc in docs:
             vector_res = nlp_pb2.VectorResponse()
@@ -270,10 +272,10 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
 
         return res
 
-    def Similarities(
+    async def Similarities(
         self,
         req: nlp_pb2.SimilaritiesRequest,
-        ctx: grpc.ServicerContext,
+        ctx: grpc.aio.ServicerContext,
     ) -> nlp_pb2.SimilaritiesResponse:
         res = nlp_pb2.SimilaritiesResponse()
 
@@ -300,9 +302,9 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
         text_tuples = [(x.text1, x.text2) for x in req.text_tuples]
         texts1, texts2 = zip(*text_tuples)
 
-        # with nlp.select_pipes(enable=custom_components):
-        docs1 = t.cast(t.List[Doc], list(nlp.pipe(texts1)))
-        docs2 = t.cast(t.List[Doc], list(nlp.pipe(texts2)))
+        with nlp.select_pipes(enable=custom_components):
+            docs1 = t.cast(t.List[Doc], list(nlp.pipe(texts1)))
+            docs2 = t.cast(t.List[Doc], list(nlp.pipe(texts2)))
 
         res.similarities.extend(
             doc1.similarity(doc2) for doc1, doc2 in zip(docs1, docs2)
@@ -314,17 +316,17 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
 app = typer.Typer()
 
 
-def add_services(server: grpc.Server):
+def add_services(server: grpc.aio.Server):
     """Add the services to the grpc server."""
 
     nlp_pb2_grpc.add_NlpServiceServicer_to_server(NlpService(), server)
 
 
 @app.command()
-def main(host: str, ports: t.List[int], threads: int = 1):
+def main(host: str, start_port: int, processes: int = 1):
     """Main entry point for the server."""
 
-    arg_services_helper.serve(host, ports, add_services, threads)
+    asyncio.run(arg_services_helper.serve(host, start_port, add_services, processes))
 
 
 if __name__ == "__main__":

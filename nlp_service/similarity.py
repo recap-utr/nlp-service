@@ -28,7 +28,10 @@ def _fuzzify(s, u):
 
 
 def cosine(vec1: np.ndarray, vec2: np.ndarray) -> float:
-    return 1 - scipy_dist.cosine(vec1, vec2)
+    if np.any(vec1) and np.any(vec2):
+        return 1 - scipy_dist.cosine(vec1, vec2)
+
+    return 0.0
 
 
 def _cosine(obj1: SpacyObj, obj2: SpacyObj) -> float:
