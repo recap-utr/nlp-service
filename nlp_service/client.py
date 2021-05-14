@@ -15,7 +15,7 @@ Span.set_extension("vector", default=None)
 Token.set_extension("vector", default=None)
 
 
-def docbin2doc(
+def docbin2docs(
     docbin_bytes: bytes, language: str, similarity_method: int = 0
 ) -> t.Tuple[Doc, ...]:
     nlp = spacy.blank(language)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import itertools
 import sys
 import typing as t
 from abc import ABC, abstractmethod
@@ -191,6 +192,7 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
     ) -> nlp_pb2.DocBinResponse:
         arg_services_helper.require_all(["language"], req, ctx)
         arg_services_helper.forbid_all(["attributes", "no_attributes"], req, ctx)
+        arg_services_helper.forbid_all(["pipes", "no_pipes"], req, ctx)
 
         for model in req.embedding_models:
             arg_services_helper.require_all(
@@ -203,10 +205,12 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
         res = nlp_pb2.DocBinResponse()
 
         nlp = _load_spacy(req.language, req.spacy_model, req.embedding_models)
-        nlp_args = {"disable": []}
+        nlp_args = {"disable": []}  # if empty, spacy will raise an exception
 
-        if req.no_attributes:
+        if req.no_attributes or req.no_pipes:
             nlp_args = {"enable": custom_components}
+        elif req.pipes:
+            nlp_args = {"enable": itertools.chain(custom_components, req.pipes)}
 
         with nlp.select_pipes(**nlp_args):
             docs = t.cast(t.List[Doc], list(nlp.pipe(req.texts)))
