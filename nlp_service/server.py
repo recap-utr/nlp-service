@@ -12,8 +12,10 @@ import numpy as np
 import spacy
 import tensorflow_hub as hub
 import typer
-from arg_services.base.v1 import base_pb2
 from arg_services.nlp.v1 import nlp_pb2, nlp_pb2_grpc
+
+# from arg_services.topic_modeling.v1 import topic_modeling_pb2, topic_modeling_pb2_grpc
+# from bertopic import BERTopic
 from sentence_transformers import SentenceTransformer
 from spacy.tokens import Doc, DocBin, Span, Token  # type: ignore
 
@@ -137,21 +139,20 @@ def _hash_embedding_model(model: nlp_pb2.EmbeddingModel):
     return (model.model_type, model.model_name, model.pooling)
 
 
-def _load_spacy(
-    language: str,
-    spacy_model: str,
-    embedding_models: t.Iterable[nlp_pb2.EmbeddingModel],
-    similarity_method: nlp_pb2.SimilarityMethod.V = nlp_pb2.SIMILARITY_METHOD_COSINE,
-) -> spacy.Language:
-    models = tuple(_hash_embedding_model(model) for model in embedding_models)
+def _load_spacy(config: nlp_pb2.NlpConfig) -> spacy.Language:
+    models = tuple(_hash_embedding_model(model) for model in config.embedding_models)
     key = (
-        language,
-        spacy_model,
+        config.language,
+        config.spacy_model,
         models,
     )
 
     if key not in spacy_cache:
-        nlp = spacy.load(spacy_model) if spacy_model else spacy.blank(language)
+        nlp = (
+            spacy.load(config.spacy_model)
+            if config.spacy_model
+            else spacy.blank(config.language)
+        )
 
         if models:
             nlp.add_pipe(
@@ -160,8 +161,13 @@ def _load_spacy(
                 config={"models": models},
             )
 
-        if similarity_method != nlp_pb2.SIMILARITY_METHOD_COSINE:
-            nlp.add_pipe("similarity", last=True, config={"method": similarity_method})
+        if config.similarity_method not in [
+            nlp_pb2.SIMILARITY_METHOD_COSINE,
+            nlp_pb2.SIMILARITY_METHOD_UNSPECIFIED,
+        ]:
+            nlp.add_pipe(
+                "similarity", last=True, config={"method": config.similarity_method}
+            )
 
         spacy_cache[key] = nlp
 
@@ -190,12 +196,12 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
         req: nlp_pb2.DocBinRequest,
         ctx: grpc.aio.ServicerContext,
     ) -> nlp_pb2.DocBinResponse:
-        arg_services_helper.require_all(["language"], req, ctx)
-        arg_services_helper.forbid_all(["attributes", "no_attributes"], req, ctx)
-        arg_services_helper.forbid_all(["pipes", "no_pipes"], req, ctx)
+        await arg_services_helper.require_all(["config.language"], req, ctx)
+        await arg_services_helper.forbid_all(["attributes", "no_attributes"], req, ctx)
+        await arg_services_helper.forbid_all(["pipes", "no_pipes"], req, ctx)
 
-        for model in req.embedding_models:
-            arg_services_helper.require_all(
+        for model in req.config.embedding_models:
+            await arg_services_helper.require_all(
                 ["model_type", "model_name", "pooling"],
                 model,
                 ctx,
@@ -204,7 +210,7 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
 
         res = nlp_pb2.DocBinResponse()
 
-        nlp = _load_spacy(req.language, req.spacy_model, req.embedding_models)
+        nlp = _load_spacy(req.config)
         nlp_args = {"disable": []}  # if empty, spacy will raise an exception
 
         if req.no_attributes or req.no_pipes:
@@ -242,15 +248,17 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
     ) -> nlp_pb2.VectorsResponse:
         res = nlp_pb2.VectorsResponse()
 
-        arg_services_helper.require_all(["language", "embedding_levels"], req, ctx)
-        arg_services_helper.require_all_repeated(
-            "embedding_models",
+        await arg_services_helper.require_all(
+            ["config.language", "embedding_levels"], req, ctx
+        )
+        await arg_services_helper.require_all_repeated(
+            "config.embedding_models",
             ["model_type", "model_name", "pooling"],
             req,
             ctx,
         )
 
-        nlp = _load_spacy(req.language, req.spacy_model, req.embedding_models)
+        nlp = _load_spacy(req.config)
 
         with nlp.select_pipes(enable=custom_components):
             docs = t.cast(t.List[Doc], list(nlp.pipe(req.texts)))
@@ -283,26 +291,23 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
     ) -> nlp_pb2.SimilaritiesResponse:
         res = nlp_pb2.SimilaritiesResponse()
 
-        arg_services_helper.require_all(["language", "similarity_method"], req, ctx)
-        arg_services_helper.require_all_repeated(
-            "embedding_models",
+        await arg_services_helper.require_all(
+            ["config.language", "config.similarity_method"], req, ctx
+        )
+        await arg_services_helper.require_all_repeated(
+            "config.embedding_models",
             ["model_type", "model_name", "pooling"],
             req,
             ctx,
         )
-        arg_services_helper.require_all_repeated(
+        await arg_services_helper.require_all_repeated(
             "text_tuples",
             ["text1", "text2"],
             req,
             ctx,
         )
 
-        nlp = _load_spacy(
-            req.language,
-            req.spacy_model,
-            req.embedding_models,
-            req.similarity_method,
-        )
+        nlp = _load_spacy(req.config)
         text_tuples = [(x.text1, x.text2) for x in req.text_tuples]
         texts1, texts2 = zip(*text_tuples)
 
@@ -317,6 +322,43 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
         return res
 
 
+# TODO: Cross product of all terms in query and major claim of the retrieved graph.
+# Only consider terms with equal POS tag and try to find combinations with low distances in wordnet.
+# These paths can then be used as generalization paths.
+
+
+# class TopicModelingService(topic_modeling_pb2_grpc.TopicModelingServiceServicer):
+#     def Topics(
+#         self, req: topic_modeling_pb2.TopicsRequest, ctx: grpc.aio.ServicerContext
+#     ) -> topic_modeling_pb2.TopicsResponse:
+#         # https://maartengr.github.io/BERTopic/tutorial/embeddings/embeddings.html#spacy
+#         nlp = _load_spacy(req.config)
+#         nlp.select_pipes(
+#             disable=["tagger", "parser", "ner", "attribute_ruler", "lemmatizer"]
+#         )
+#         topic_model = BERTopic(embedding_model=nlp)
+#         topic_model.fit_transform(list(req.documents))
+#         res = topic_modeling_pb2.TopicsResponse()
+
+#         topic_map = t.cast(
+#             t.Mapping[int, t.Iterable[t.Tuple[str, float]]], topic_model.get_topics()
+#         )
+
+#         for key, topic in topic_map.items():
+#             count = t.cast(int, topic_model.get_topic_freq(key))
+#             terms = [
+#                 topic_modeling_pb2.Term(text=term, score=score) for term, score in topic
+#             ]
+
+#             if key == -1:
+#                 res.outliers.terms.extend(terms)
+#                 res.outliers.count = count
+#             else:
+#                 res.topics.append(topic_modeling_pb2.Topic(count=count, terms=terms))
+
+#         return res
+
+
 app = typer.Typer()
 
 
@@ -324,13 +366,29 @@ def add_services(server: grpc.aio.Server):
     """Add the services to the grpc server."""
 
     nlp_pb2_grpc.add_NlpServiceServicer_to_server(NlpService(), server)
+    # topic_modeling_pb2_grpc.add_TopicModelingServiceServicer_to_server(
+    #     TopicModelingService(), server
+    # )
 
 
 @app.command()
 def main(host: str, start_port: int, processes: int = 1):
     """Main entry point for the server."""
 
-    asyncio.run(arg_services_helper.serve(host, start_port, add_services, processes))
+    asyncio.run(
+        arg_services_helper.serve(
+            host,
+            start_port,
+            add_services,
+            processes,
+            reflection_services=[
+                arg_services_helper.full_service_name(nlp_pb2, "NlpService"),
+                # arg_services_helper.full_service_name(
+                #     topic_modeling_pb2, "TopicModelingService"
+                # ),
+            ],
+        )
+    )
 
 
 if __name__ == "__main__":

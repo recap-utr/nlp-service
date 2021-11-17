@@ -6,6 +6,7 @@ import numpy as np
 import spacy
 from arg_services.base.v1 import base_pb2
 from arg_services.nlp.v1 import nlp_pb2
+from spacy.language import Language
 from spacy.tokens import Doc, DocBin, Span, Token  # type: ignore
 
 from nlp_service import similarity
@@ -15,14 +16,22 @@ Span.set_extension("vector", default=None)
 Token.set_extension("vector", default=None)
 
 
+def blank(language: str, similarity_method: int = 0) -> Language:
+    spacy_lang = spacy.blank(language)
+    inject_pipes(spacy_lang, similarity_method)
+
+    return spacy_lang
+
+
 def docbin2docs(
-    docbin_bytes: bytes, language: str, similarity_method: int = 0
+    docbin_bytes: bytes, language: t.Union[str, Language], similarity_method: int = 0
 ) -> t.Tuple[Doc, ...]:
-    nlp = spacy.blank(language)
-    inject_pipes(nlp, similarity_method)
+    if isinstance(language, str):
+        language = blank(language, similarity_method)
+
     docbin = DocBin().from_bytes(docbin_bytes)
 
-    return tuple(docbin.get_docs(nlp.vocab))
+    return tuple(docbin.get_docs(language.vocab))
 
 
 def list2array(values: t.Iterable[float]) -> np.ndarray:
@@ -46,9 +55,6 @@ def inject_vectors(
 
 
 def inject_pipes(nlp: spacy.Language, similarity_method: int = 0) -> None:
-    if not similarity_method:
-        similarity_method = nlp_pb2.SIMILARITY_METHOD_COSINE
-
     nlp.add_pipe("vector", last=True)
     nlp.add_pipe("similarity", last=True, config={"method": similarity_method})
 
@@ -67,11 +73,13 @@ def _vector_component(doc):
 @spacy.Language.factory("similarity")
 class SimilarityFactory:
     def __init__(self, nlp, name, method):
-        self.func = similarity.mapping[method]
+        if method:
+            self.func = similarity.mapping[method]
 
     def __call__(self, doc):
-        doc.user_hooks["similarity"] = self.func
-        doc.user_span_hooks["similarity"] = self.func
-        doc.user_token_hooks["similarity"] = self.func
+        if self.func:
+            doc.user_hooks["similarity"] = self.func
+            doc.user_span_hooks["similarity"] = self.func
+            doc.user_token_hooks["similarity"] = self.func
 
         return doc

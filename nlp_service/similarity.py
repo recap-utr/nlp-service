@@ -201,34 +201,34 @@ mapping = {
     nlp_pb2.SIMILARITY_METHOD_JACCARD: _jaccard,
 }
 
-try:
-    from gensim.models import KeyedVectors
+# try:
+#     from gensim.models import KeyedVectors
 
-    # TODO: Implement generic version `wmd` for use without spacy
+#     # TODO: Implement generic version `wmd` for use without spacy
 
-    def _wmd(obj1, obj2) -> float:
-        words1, vecs1 = _wmd_model(obj1)
-        words2, vecs2 = _wmd_model(obj2)
+#     def _wmd(obj1, obj2) -> float:
+#         words1, vecs1 = _wmd_model(obj1)
+#         words2, vecs2 = _wmd_model(obj2)
 
-        dim = max(vec.shape[0] for vec in itertools.chain(vecs1, vecs2))
-        gensim_model = KeyedVectors(dim)
-        gensim_model.add_vectors(words1 + words2, vecs1 + vecs2)
+#         dim = max(vec.shape[0] for vec in itertools.chain(vecs1, vecs2))
+#         gensim_model = KeyedVectors(dim)
+#         gensim_model.add_vectors(words1 + words2, vecs1 + vecs2)
 
-        return dist2sim(gensim_model.wmdistance(words1, words2))
+#         return dist2sim(gensim_model.wmdistance(words1, words2))
 
-    def _wmd_model(obj) -> t.Tuple[t.List[str], t.List[np.ndarray]]:
-        if isinstance(obj, Token):
-            if obj.is_stop:
-                return [], []
+#     def _wmd_model(obj) -> t.Tuple[t.List[str], t.List[np.ndarray]]:
+#         if isinstance(obj, Token):
+#             if obj.is_stop:
+#                 return [], []
 
-            return [obj.text], [obj.vector]
+#             return [obj.text], [obj.vector]
 
-        return [t.text for t in obj if not t.is_stop], [
-            t.vector for t in obj if not t.is_stop
-        ]
+#         return [t.text for t in obj if not t.is_stop], [
+#             t.vector for t in obj if not t.is_stop
+#         ]
 
-    mapping[nlp_pb2.SIMILARITY_METHOD_WMD] = _wmd
+#     mapping[nlp_pb2.SIMILARITY_METHOD_WMD] = _wmd
 
 
-except ImportError as e:
-    pass
+# except ImportError as e:
+#     pass
