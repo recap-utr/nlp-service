@@ -1,13 +1,11 @@
 from __future__ import annotations
 
-import asyncio
 import itertools
-import sys
 import typing as t
 from abc import ABC, abstractmethod
 
 import arg_services_helper
-import grpc.aio
+import grpc
 import numpy as np
 import spacy
 import tensorflow_hub as hub
@@ -191,17 +189,17 @@ embedding_map = {
 
 
 class NlpService(nlp_pb2_grpc.NlpServiceServicer):
-    async def DocBin(
+    def DocBin(
         self,
         req: nlp_pb2.DocBinRequest,
-        ctx: grpc.aio.ServicerContext,
+        ctx: grpc.ServicerContext,
     ) -> nlp_pb2.DocBinResponse:
-        await arg_services_helper.require_all(["config.language"], req, ctx)
-        await arg_services_helper.forbid_all(["attributes", "no_attributes"], req, ctx)
-        await arg_services_helper.forbid_all(["pipes", "no_pipes"], req, ctx)
+        arg_services_helper.require_all(["config.language"], req, ctx)
+        arg_services_helper.forbid_all(["attributes", "no_attributes"], req, ctx)
+        arg_services_helper.forbid_all(["pipes", "no_pipes"], req, ctx)
 
         for model in req.config.embedding_models:
-            await arg_services_helper.require_all(
+            arg_services_helper.require_all(
                 ["model_type", "model_name", "pooling"],
                 model,
                 ctx,
@@ -241,17 +239,17 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
 
         return res
 
-    async def Vectors(
+    def Vectors(
         self,
         req: nlp_pb2.VectorsRequest,
-        ctx: grpc.aio.ServicerContext,
+        ctx: grpc.ServicerContext,
     ) -> nlp_pb2.VectorsResponse:
         res = nlp_pb2.VectorsResponse()
 
-        await arg_services_helper.require_all(
+        arg_services_helper.require_all(
             ["config.language", "embedding_levels"], req, ctx
         )
-        await arg_services_helper.require_all_repeated(
+        arg_services_helper.require_all_repeated(
             "config.embedding_models",
             ["model_type", "model_name", "pooling"],
             req,
@@ -284,23 +282,23 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
 
         return res
 
-    async def Similarities(
+    def Similarities(
         self,
         req: nlp_pb2.SimilaritiesRequest,
-        ctx: grpc.aio.ServicerContext,
+        ctx: grpc.ServicerContext,
     ) -> nlp_pb2.SimilaritiesResponse:
         res = nlp_pb2.SimilaritiesResponse()
 
-        await arg_services_helper.require_all(
+        arg_services_helper.require_all(
             ["config.language", "config.similarity_method"], req, ctx
         )
-        await arg_services_helper.require_all_repeated(
+        arg_services_helper.require_all_repeated(
             "config.embedding_models",
             ["model_type", "model_name", "pooling"],
             req,
             ctx,
         )
-        await arg_services_helper.require_all_repeated(
+        arg_services_helper.require_all_repeated(
             "text_tuples",
             ["text1", "text2"],
             req,
@@ -329,7 +327,7 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
 
 # class TopicModelingService(topic_modeling_pb2_grpc.TopicModelingServiceServicer):
 #     def Topics(
-#         self, req: topic_modeling_pb2.TopicsRequest, ctx: grpc.aio.ServicerContext
+#         self, req: topic_modeling_pb2.TopicsRequest, ctx: grpc.ServicerContext
 #     ) -> topic_modeling_pb2.TopicsResponse:
 #         # https://maartengr.github.io/BERTopic/tutorial/embeddings/embeddings.html#spacy
 #         nlp = _load_spacy(req.config)
@@ -362,7 +360,7 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
 app = typer.Typer()
 
 
-def add_services(server: grpc.aio.Server):
+def add_services(server: grpc.Server):
     """Add the services to the grpc server."""
 
     nlp_pb2_grpc.add_NlpServiceServicer_to_server(NlpService(), server)
@@ -372,22 +370,22 @@ def add_services(server: grpc.aio.Server):
 
 
 @app.command()
-def main(host: str, start_port: int, processes: int = 1):
+def main(host: str, port: int, processes: int = 1):
     """Main entry point for the server."""
 
-    asyncio.run(
-        arg_services_helper.serve(
-            host,
-            start_port,
-            add_services,
-            processes,
-            reflection_services=[
-                arg_services_helper.full_service_name(nlp_pb2, "NlpService"),
-                # arg_services_helper.full_service_name(
-                #     topic_modeling_pb2, "TopicModelingService"
-                # ),
-            ],
-        )
+    print(1)
+
+    arg_services_helper.serve(
+        host,
+        port,
+        add_services,
+        processes=processes,
+        reflection_services=[
+            arg_services_helper.full_service_name(nlp_pb2, "NlpService"),
+            # arg_services_helper.full_service_name(
+            #     topic_modeling_pb2, "TopicModelingService"
+            # ),
+        ],
     )
 
 
