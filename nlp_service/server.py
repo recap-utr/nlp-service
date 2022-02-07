@@ -320,43 +320,6 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
         return res
 
 
-# TODO: Cross product of all terms in query and major claim of the retrieved graph.
-# Only consider terms with equal POS tag and try to find combinations with low distances in wordnet.
-# These paths can then be used as generalization paths.
-
-
-# class TopicModelingService(topic_modeling_pb2_grpc.TopicModelingServiceServicer):
-#     def Topics(
-#         self, req: topic_modeling_pb2.TopicsRequest, ctx: grpc.ServicerContext
-#     ) -> topic_modeling_pb2.TopicsResponse:
-#         # https://maartengr.github.io/BERTopic/tutorial/embeddings/embeddings.html#spacy
-#         nlp = _load_spacy(req.config)
-#         nlp.select_pipes(
-#             disable=["tagger", "parser", "ner", "attribute_ruler", "lemmatizer"]
-#         )
-#         topic_model = BERTopic(embedding_model=nlp)
-#         topic_model.fit_transform(list(req.documents))
-#         res = topic_modeling_pb2.TopicsResponse()
-
-#         topic_map = t.cast(
-#             t.Mapping[int, t.Iterable[t.Tuple[str, float]]], topic_model.get_topics()
-#         )
-
-#         for key, topic in topic_map.items():
-#             count = t.cast(int, topic_model.get_topic_freq(key))
-#             terms = [
-#                 topic_modeling_pb2.Term(text=term, score=score) for term, score in topic
-#             ]
-
-#             if key == -1:
-#                 res.outliers.terms.extend(terms)
-#                 res.outliers.count = count
-#             else:
-#                 res.topics.append(topic_modeling_pb2.Topic(count=count, terms=terms))
-
-#         return res
-
-
 # [
 #     "",
 #     "IS_ALPHA",
