@@ -115,12 +115,14 @@ class ConcatFactory:
 @spacy.Language.factory("similarity")
 class SimilarityFactory:
     def __init__(self, nlp, name, method):
-        self.func = similarity.mapping[method]
+        if method:
+            self.func = spacy_mapping[method]
 
     def __call__(self, doc):
-        doc.user_hooks["similarity"] = self.func
-        doc.user_span_hooks["similarity"] = self.func
-        doc.user_token_hooks["similarity"] = self.func
+        if self.func:
+            doc.user_hooks["similarity"] = self.func
+            doc.user_span_hooks["similarity"] = self.func
+            doc.user_token_hooks["similarity"] = self.func
 
         return doc
 
