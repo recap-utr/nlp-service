@@ -11,8 +11,8 @@ six = "*"
 
 [[package]]
 name = "arg-services"
-version = "0.1.21"
-description = "GraphQL and gRPC schemas for Microservice-based Argumentation Machines."
+version = "0.1.22"
+description = "gRPC definitions for microservice-based argumentation machines"
 category = "main"
 optional = false
 python-versions = ">=3.6,<4.0"
@@ -1118,7 +1118,7 @@ python-versions = "*"
 
 [[package]]
 name = "werkzeug"
-version = "2.0.2"
+version = "2.0.3"
 description = "The comprehensive WSGI web application library."
 category = "main"
 optional = true
@@ -1154,7 +1154,7 @@ wmd = ["gensim"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.11"
-content-hash = "9c1ffc66a9ebfa554b44806dca171674801e6a5b64168494f5046b158c4d7d5e"
+content-hash = "8cdb51cd768b20f191d6f6e02aceadd7db5b4cfc5c4f32fce2468addfd048b10"
 
 [metadata.files]
 absl-py = [
@@ -1162,8 +1162,8 @@ absl-py = [
     {file = "absl_py-1.0.0-py3-none-any.whl", hash = "sha256:84e6dcdc69c947d0c13e5457d056bd43cade4c2393dce00d684aedea77ddc2a3"},
 ]
 arg-services = [
-    {file = "arg-services-0.1.21.tar.gz", hash = "sha256:3585951635577a5be30f8bd7e0fc591b6e926a6bd22326edef6d814aa0562c79"},
-    {file = "arg_services-0.1.21-py3-none-any.whl", hash = "sha256:fc69b11cf5f25383052c876be6d50928bd66847d7dbd135f81d01bd0b0729239"},
+    {file = "arg-services-0.1.22.tar.gz", hash = "sha256:f3ed9d0713340a96c4b6c3a4419a254c86b63ee7853678d0dbc5fd7ff9eddbe0"},
+    {file = "arg_services-0.1.22-py3-none-any.whl", hash = "sha256:037b4a98e5904ab9c73b4a5f1317087f0e09198532589f045c2575492f0441a3"},
 ]
 astunparse = [
     {file = "astunparse-1.6.3-py2.py3-none-any.whl", hash = "sha256:c2652417f2c8b5bb325c885ae329bdf3f86424075c4fd1a128674bc6fba4b8e8"},
@@ -2113,8 +2113,8 @@ wasabi = [
     {file = "wasabi-0.9.0.tar.gz", hash = "sha256:152245d892030a3a7b511038e9472acff6d0e237cfe4123fef0d147f2d3274fc"},
 ]
 werkzeug = [
-    {file = "Werkzeug-2.0.2-py3-none-any.whl", hash = "sha256:63d3dc1cf60e7b7e35e97fa9861f7397283b75d765afcaefd993d6046899de8f"},
-    {file = "Werkzeug-2.0.2.tar.gz", hash = "sha256:aa2bb6fc8dee8d6c504c0ac1e7f5f7dc5810a9903e793b6f715a9f015bdadb9a"},
+    {file = "Werkzeug-2.0.3-py3-none-any.whl", hash = "sha256:1421ebfc7648a39a5c58c601b154165d05cf47a3cd0ccb70857cbdacf6c8f2b8"},
+    {file = "Werkzeug-2.0.3.tar.gz", hash = "sha256:b863f8ff057c522164b6067c9e28b041161b4be5ba4d0daceeaa50a163822d3c"},
 ]
 wrapt = [
     {file = "wrapt-1.13.3-cp27-cp27m-macosx_10_9_x86_64.whl", hash = "sha256:e05e60ff3b2b0342153be4d1b597bbcfd8330890056b9619f4ad6b8d5c96a81a"},

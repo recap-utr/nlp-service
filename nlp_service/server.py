@@ -7,6 +7,7 @@ from abc import ABC, abstractmethod
 import arg_services_helper
 import grpc
 import numpy as np
+import scipy.stats
 import spacy
 import tensorflow_hub as hub
 import typer
@@ -17,7 +18,7 @@ from arg_services.nlp.v1 import nlp_pb2, nlp_pb2_grpc
 from sentence_transformers import SentenceTransformer
 from spacy.tokens import Doc, DocBin, Span, Token  # type: ignore
 
-from nlp_service import similarity
+from nlp_service.similarity import spacy_mapping
 
 # https://spacy.io/usage/processing-pipelines#built-in
 spacy_components = (
@@ -181,6 +182,9 @@ pool_map = {
     nlp_pb2.POOLING_MIN: np.min,
     nlp_pb2.POOLING_MAX: np.max,
     nlp_pb2.POOLING_SUM: np.sum,
+    nlp_pb2.POOLING_MEDIAN: np.median,
+    nlp_pb2.POOLING_GMEAN: scipy.stats.gmean,
+    nlp_pb2.POOLING_HMEAN: scipy.stats.hmean,
 }
 
 embedding_map = {

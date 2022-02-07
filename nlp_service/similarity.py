@@ -38,6 +38,26 @@ def _cosine(obj1: SpacyObj, obj2: SpacyObj) -> float:
     return 1 - scipy_dist.cosine(obj1.vector, obj2.vector)
 
 
+def angular(vec1: np.ndarray, vec2: np.ndarray) -> float:
+    if vec1.any() and vec2.any():
+        try:
+            return (
+                1.0
+                - np.arccos(
+                    np.dot(vec1, vec2) / (np.linalg.norm(vec1) * np.linalg.norm(vec2))
+                )
+                / np.pi
+            )
+        except Exception:
+            pass
+
+    return 0.0
+
+
+def _angular(obj1: SpacyObj, obj2: SpacyObj) -> float:
+    return angular(obj1.vector, obj2.vector)
+
+
 def dynamax_jaccard(x: t.Iterable[np.ndarray], y: t.Iterable[np.ndarray]) -> float:
     """
     DynaMax-Jaccard similarity measure between two sentences
@@ -172,19 +192,13 @@ def _jaccard(obj1: SpacyObj, obj2: SpacyObj) -> float:
 
 def _token_set(obj) -> t.Set[str]:
     if isinstance(obj, Token):
-        if obj.is_stop:
-            return set()
-
-        return {obj.text}
+        return set() if obj.is_stop else {obj.text}
 
     return {t.text for t in obj if not t.is_stop}
 
 
 def _token_vectors(obj) -> t.List[np.ndarray]:
-    if isinstance(obj, Token):
-        return [obj.vector]
-
-    return [t.vector for t in obj]
+    return [obj.vector] if isinstance(obj, Token) else [t.vector for t in obj]
 
 
 def dist2sim(distance: float) -> float:
@@ -192,7 +206,19 @@ def dist2sim(distance: float) -> float:
 
 
 mapping = {
+    "cosine": cosine,
+    "angular": angular,
+    "dynamax_jaccard": dynamax_jaccard,
+    "maxpool_jaccard": maxpool_jaccard,
+    "dynamax_dice": dynamax_dice,
+    "dynamax_otsuka": dynamax_otsuka,
+    "edit": edit,
+    "jaccard": jaccard,
+}
+
+spacy_mapping = {
     nlp_pb2.SIMILARITY_METHOD_COSINE: _cosine,
+    nlp_pb2.SIMILARITY_METHOD_ANGULAR: _angular,
     nlp_pb2.SIMILARITY_METHOD_DYNAMAX_JACCARD: _dynamax_jaccard,
     nlp_pb2.SIMILARITY_METHOD_MAXPOOL_JACCARD: _maxpool_jaccard,
     nlp_pb2.SIMILARITY_METHOD_DYNAMAX_DICE: _dynamax_dice,
@@ -201,34 +227,31 @@ mapping = {
     nlp_pb2.SIMILARITY_METHOD_JACCARD: _jaccard,
 }
 
-# try:
-#     from gensim.models import KeyedVectors
+try:
+    from gensim.models import KeyedVectors
 
-#     # TODO: Implement generic version `wmd` for use without spacy
+    # TODO: Implement generic version `wmd` for use without spacy
 
-#     def _wmd(obj1, obj2) -> float:
-#         words1, vecs1 = _wmd_model(obj1)
-#         words2, vecs2 = _wmd_model(obj2)
+    def _wmd(obj1, obj2) -> float:
+        words1, vecs1 = _wmd_model(obj1)
+        words2, vecs2 = _wmd_model(obj2)
 
-#         dim = max(vec.shape[0] for vec in itertools.chain(vecs1, vecs2))
-#         gensim_model = KeyedVectors(dim)
-#         gensim_model.add_vectors(words1 + words2, vecs1 + vecs2)
+        dim = max(vec.shape[0] for vec in itertools.chain(vecs1, vecs2))
+        gensim_model = KeyedVectors(dim)
+        gensim_model.add_vectors(words1 + words2, vecs1 + vecs2)
 
-#         return dist2sim(gensim_model.wmdistance(words1, words2))
+        return dist2sim(gensim_model.wmdistance(words1, words2))
 
-#     def _wmd_model(obj) -> t.Tuple[t.List[str], t.List[np.ndarray]]:
-#         if isinstance(obj, Token):
-#             if obj.is_stop:
-#                 return [], []
+    def _wmd_model(obj) -> t.Tuple[t.List[str], t.List[np.ndarray]]:
+        if isinstance(obj, Token):
+            return ([], []) if obj.is_stop else ([obj.text], [obj.vector])
 
-#             return [obj.text], [obj.vector]
+        return [t.text for t in obj if not t.is_stop], [
+            t.vector for t in obj if not t.is_stop
+        ]
 
-#         return [t.text for t in obj if not t.is_stop], [
-#             t.vector for t in obj if not t.is_stop
-#         ]
-
-#     mapping[nlp_pb2.SIMILARITY_METHOD_WMD] = _wmd
+    mapping[nlp_pb2.SIMILARITY_METHOD_WMD] = _wmd
 
 
-# except ImportError as e:
-#     pass
+except ImportError as e:
+    pass
