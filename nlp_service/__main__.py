@@ -21,8 +21,6 @@ def add_services(server: grpc.Server):
 def main(host: str, port: int, processes: int = 1):
     """Main entry point for the server."""
 
-    print(1)
-
     arg_services_helper.serve(
         host,
         port,
