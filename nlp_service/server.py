@@ -357,42 +357,6 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
 #         return res
 
 
-app = typer.Typer()
-
-
-def add_services(server: grpc.Server):
-    """Add the services to the grpc server."""
-
-    nlp_pb2_grpc.add_NlpServiceServicer_to_server(NlpService(), server)
-    # topic_modeling_pb2_grpc.add_TopicModelingServiceServicer_to_server(
-    #     TopicModelingService(), server
-    # )
-
-
-@app.command()
-def main(host: str, port: int, processes: int = 1):
-    """Main entry point for the server."""
-
-    print(1)
-
-    arg_services_helper.serve(
-        host,
-        port,
-        add_services,
-        processes=processes,
-        reflection_services=[
-            arg_services_helper.full_service_name(nlp_pb2, "NlpService"),
-            # arg_services_helper.full_service_name(
-            #     topic_modeling_pb2, "TopicModelingService"
-            # ),
-        ],
-    )
-
-
-if __name__ == "__main__":
-    app()
-
-
 # [
 #     "",
 #     "IS_ALPHA",
