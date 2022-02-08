@@ -216,6 +216,17 @@ mapping = {
     "jaccard": jaccard,
 }
 
+proto_mapping = {
+    nlp_pb2.SIMILARITY_METHOD_COSINE: cosine,
+    nlp_pb2.SIMILARITY_METHOD_ANGULAR: angular,
+    nlp_pb2.SIMILARITY_METHOD_DYNAMAX_JACCARD: dynamax_jaccard,
+    nlp_pb2.SIMILARITY_METHOD_MAXPOOL_JACCARD: maxpool_jaccard,
+    nlp_pb2.SIMILARITY_METHOD_DYNAMAX_DICE: dynamax_dice,
+    nlp_pb2.SIMILARITY_METHOD_DYNAMAX_OTSUKA: dynamax_otsuka,
+    nlp_pb2.SIMILARITY_METHOD_EDIT: edit,
+    nlp_pb2.SIMILARITY_METHOD_JACCARD: jaccard,
+}
+
 spacy_mapping = {
     nlp_pb2.SIMILARITY_METHOD_COSINE: _cosine,
     nlp_pb2.SIMILARITY_METHOD_ANGULAR: _angular,
