@@ -302,7 +302,7 @@ name = "joblib"
 version = "1.1.0"
 description = "Lightweight pipelining with Python functions"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.6"
 
 [[package]]
@@ -384,7 +384,7 @@ name = "nltk"
 version = "3.6.7"
 description = "Natural Language Toolkit"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.6"
 
 [package.dependencies]
@@ -571,7 +571,7 @@ name = "regex"
 version = "2022.1.18"
 description = "Alternative regular expression module, to replace re."
 category = "main"
-optional = true
+optional = false
 python-versions = "*"
 
 [[package]]
@@ -1154,7 +1154,7 @@ wmd = ["gensim"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.11"
-content-hash = "8cdb51cd768b20f191d6f6e02aceadd7db5b4cfc5c4f32fce2468addfd048b10"
+content-hash = "c06c4a1704ccebff5c49d1e4ff9dbb052db01179a2d0fb8ddd7faa3705aa3ccd"
 
 [metadata.files]
 absl-py = [
