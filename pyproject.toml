@@ -8,6 +8,9 @@ readme = "README.md"
 homepage = "http://recap.uni-trier.de"
 repository = "https://github.com/ReCAP-UTR/NLP"
 
+[tool.poetry.scripts]
+nlp-service = "nlp_service.server:app"
+
 [tool.poetry.dependencies]
 python = ">=3.8,<3.11"
 numpy = "^1.22.2"
