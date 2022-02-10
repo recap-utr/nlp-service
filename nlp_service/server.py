@@ -339,17 +339,13 @@ def add_services(server: grpc.Server):
 
 
 @app.command()
-def main(host: str, port: int, processes: int = 1):
+def main(address: str):
     """Main entry point for the server."""
 
     arg_services_helper.serve(
-        host,
-        port,
+        address,
         add_services,
-        processes=processes,
-        reflection_services=[
-            arg_services_helper.full_service_name(nlp_pb2, "NlpService"),
-        ],
+        [arg_services_helper.full_service_name(nlp_pb2, "NlpService")],
     )
 
 

@@ -11,7 +11,7 @@ six = "*"
 
 [[package]]
 name = "arg-services"
-version = "0.1.22"
+version = "0.2.0"
 description = "gRPC definitions for microservice-based argumentation machines"
 category = "main"
 optional = false
@@ -381,11 +381,11 @@ python-versions = "*"
 
 [[package]]
 name = "nltk"
-version = "3.6.7"
+version = "3.7"
 description = "Natural Language Toolkit"
 category = "main"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.7"
 
 [package.dependencies]
 click = "*"
@@ -394,7 +394,7 @@ regex = ">=2021.8.3"
 tqdm = "*"
 
 [package.extras]
-all = ["matplotlib", "numpy", "pyparsing", "python-crfsuite", "requests", "scikit-learn", "scipy", "twython"]
+all = ["numpy", "pyparsing", "scipy", "matplotlib", "twython", "requests", "scikit-learn", "python-crfsuite"]
 corenlp = ["requests"]
 machine_learning = ["numpy", "python-crfsuite", "scikit-learn", "scipy"]
 plot = ["matplotlib"]
@@ -666,8 +666,8 @@ numpy = ">=1.17.3,<1.25.0"
 
 [[package]]
 name = "sentence-transformers"
-version = "2.1.0"
-description = "Sentence Embeddings using BERT / RoBERTa / XLM-R"
+version = "2.2.0"
+description = "Multilingual text embeddings"
 category = "main"
 optional = true
 python-versions = "*"
@@ -679,7 +679,6 @@ numpy = "*"
 scikit-learn = "*"
 scipy = "*"
 sentencepiece = "*"
-tokenizers = ">=0.10.3"
 torch = ">=1.6.0"
 torchvision = "*"
 tqdm = "*"
@@ -1154,7 +1153,7 @@ wmd = ["gensim"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.11"
-content-hash = "c06c4a1704ccebff5c49d1e4ff9dbb052db01179a2d0fb8ddd7faa3705aa3ccd"
+content-hash = "0d650f11109ecaba70455ed37f0327059c2d01e0b4c978b1e5c3e42927f42f3f"
 
 [metadata.files]
 absl-py = [
@@ -1162,8 +1161,8 @@ absl-py = [
     {file = "absl_py-1.0.0-py3-none-any.whl", hash = "sha256:84e6dcdc69c947d0c13e5457d056bd43cade4c2393dce00d684aedea77ddc2a3"},
 ]
 arg-services = [
-    {file = "arg-services-0.1.22.tar.gz", hash = "sha256:f3ed9d0713340a96c4b6c3a4419a254c86b63ee7853678d0dbc5fd7ff9eddbe0"},
-    {file = "arg_services-0.1.22-py3-none-any.whl", hash = "sha256:037b4a98e5904ab9c73b4a5f1317087f0e09198532589f045c2575492f0441a3"},
+    {file = "arg-services-0.2.0.tar.gz", hash = "sha256:b2aa35c10e28e1aff78dedd63db870ff78cbdaff68c86eb0dc5d0cfc901b3dd2"},
+    {file = "arg_services-0.2.0-py3-none-any.whl", hash = "sha256:caf5c5c47e42496c8538c0de2da886e824a3935f56f4039ac4976775e2d77842"},
 ]
 astunparse = [
     {file = "astunparse-1.6.3-py2.py3-none-any.whl", hash = "sha256:c2652417f2c8b5bb325c885ae329bdf3f86424075c4fd1a128674bc6fba4b8e8"},
@@ -1474,8 +1473,8 @@ murmurhash = [
     {file = "murmurhash-1.0.6.tar.gz", hash = "sha256:00a5252b569d3f914b5bd0bce72d2efe9c0fb91a9703556ea1b608b141c68f2d"},
 ]
 nltk = [
-    {file = "nltk-3.6.7-py3-none-any.whl", hash = "sha256:22e97be5d6c784d93a52d17860515cc50c5cfcc620b1f5c3747765041255a01e"},
-    {file = "nltk-3.6.7.zip", hash = "sha256:51bf1aef5304740a708be7c8e683f7798f03dc5c7a7e7feb758be9e95f4585e3"},
+    {file = "nltk-3.7-py3-none-any.whl", hash = "sha256:ba3de02490308b248f9b94c8bc1ac0683e9aa2ec49ee78536d8667afb5e3eec8"},
+    {file = "nltk-3.7.zip", hash = "sha256:d6507d6460cec76d70afea4242a226a7542f85c669177b9c7f562b7cf1b05502"},
 ]
 numpy = [
     {file = "numpy-1.22.2-cp310-cp310-macosx_10_14_x86_64.whl", hash = "sha256:515a8b6edbb904594685da6e176ac9fbea8f73a5ebae947281de6613e27f1956"},
@@ -1848,7 +1847,7 @@ scipy = [
     {file = "scipy-1.8.0.tar.gz", hash = "sha256:31d4f2d6b724bc9a98e527b5849b8a7e589bf1ea630c33aa563eda912c9ff0bd"},
 ]
 sentence-transformers = [
-    {file = "sentence-transformers-2.1.0.tar.gz", hash = "sha256:ccf95fa214546ac64428e86286e9d674b62900893936b46b26c904eb9dfcad19"},
+    {file = "sentence-transformers-2.2.0.tar.gz", hash = "sha256:c7365228b6d24e4d73cf49d409421820887ca43c86d49f264b68cfa00d761f96"},
 ]
 sentencepiece = [
     {file = "sentencepiece-0.1.96-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:cc969e6694fb27fba7cee2953f350804faf03913f25ae1ee713a7b8a1bc08018"},
