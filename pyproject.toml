@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nlp-service"
-version = "0.2.0"
+version = "0.2.1"
 description = "Microservice for NLP tasks using gRPC"
 authors = ["Mirko Lenz <info@mirko-lenz.de>"]
 license = "Apache-2.0"
