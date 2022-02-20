@@ -3,6 +3,7 @@ from __future__ import annotations
 import itertools
 import typing as t
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 
 import arg_services_helper
 import grpc
@@ -12,13 +13,11 @@ import spacy
 import tensorflow_hub as hub
 import typer
 from arg_services.nlp.v1 import nlp_pb2, nlp_pb2_grpc
-
-# from arg_services.topic_modeling.v1 import topic_modeling_pb2, topic_modeling_pb2_grpc
-# from bertopic import BERTopic
 from sentence_transformers import SentenceTransformer
-from spacy.tokens import Doc, DocBin, Span, Token  # type: ignore
+from spacy.language import Language
+from spacy.tokens import Doc, DocBin
 
-from nlp_service.similarity import spacy_mapping
+from nlp_service.similarity import spacy_mapping as spacy_similarity_map
 
 # https://spacy.io/usage/processing-pipelines#built-in
 spacy_components = (
@@ -36,7 +35,7 @@ spacy_components = (
     "sentencizer",
     # tok2vec, transformer
 )
-custom_components = ("concat", "similarity")
+custom_components = ("embedding_models", "similarity_method")
 # custom_components = []
 
 # TODO: Extract spacy-specific code into its own file.
@@ -44,9 +43,21 @@ custom_components = ("concat", "similarity")
 # imported directly in python applications (eliminating the need to use a server).
 
 
-class EmbeddingBase(ABC):
+@dataclass(frozen=True, eq=True)
+class EmbeddingModel:
+    model_type: int
+    model_name: str
+    pooling_type: t.Optional[int]
+    pmean: t.Optional[float]
+
+    @classmethod
+    def from_protobuf(cls, pb: nlp_pb2.EmbeddingModel) -> EmbeddingModel:
+        return cls(pb.model_type, pb.model_name, pb.pooling_type, pb.pmean)
+
+
+class ModelBase(ABC):
     @abstractmethod
-    def __init__(self, model: str, pooling: nlp_pb2.Pooling.V) -> None:
+    def __init__(self, model: EmbeddingModel) -> None:
         pass
 
     @abstractmethod
@@ -54,9 +65,9 @@ class EmbeddingBase(ABC):
         pass
 
 
-class TransformerModel(EmbeddingBase):
-    def __init__(self, model: str, pooling: nlp_pb2.Pooling.V):
-        self.model = SentenceTransformer(model)
+class SentenceTransformersModel(ModelBase):
+    def __init__(self, model: EmbeddingModel):
+        self.model = SentenceTransformer(model.model_name)
 
     def vector(self, text: str):
         embeddings = self.model.encode([text])
@@ -64,9 +75,9 @@ class TransformerModel(EmbeddingBase):
         return embeddings[0]
 
 
-class UseModel(EmbeddingBase):
-    def __init__(self, model: str, pooling: nlp_pb2.Pooling.V):
-        self.model = hub.load(model)
+class TensorflowHubModel(ModelBase):
+    def __init__(self, model: EmbeddingModel):
+        self.model = hub.load(model.model_name)
 
     def vector(self, text: str):
         embeddings = self.model([text])  # type: ignore
@@ -74,29 +85,40 @@ class UseModel(EmbeddingBase):
         return embeddings[0].numpy()
 
 
-class SpacyModel(EmbeddingBase):
-    def __init__(self, model: str, pooling: nlp_pb2.Pooling.V):
-        self.model = spacy.load(model)
-        self.pooling = pooling
+def pmean(vectors: t.Any, p: float) -> np.ndarray:
+    # vectors: t.Iterable[np.ndarray]
+    return np.power(
+        np.mean(np.power(np.array(vectors, dtype=complex), p), axis=0), 1 / p
+    ).real
+
+
+class SpacyModel(ModelBase):
+    def __init__(self, model: EmbeddingModel):
+        self.model = spacy.load(model.model_name)
+        self.pooling_type = t.cast(nlp_pb2.Pooling.V, model.pooling_type)
+        self.pmean = model.pmean
 
     def vector(self, text: str):
         with self.model.select_pipes(enable=["senter"]):
             doc = self.model(text)
 
-        if len(doc) > 1 and self.pooling != nlp_pb2.POOLING_MEAN:
-            return pool_map[self.pooling]([t.vector for t in doc])
+        if len(doc) > 1:
+            if self.pooling_type and self.pooling_type != nlp_pb2.Pooling.POOLING_MEAN:
+                return pool_map[self.pooling_type](t.vector for t in doc)
+            elif self.pmean:
+                return pmean((t.vector for t in doc), self.pmean)
 
         return doc.vector
 
 
-@spacy.Language.factory("concat")
-class ConcatFactory:
+@Language.factory("embedding_models")
+class EmbeddingsFactory:
     def __init__(self, nlp, name, models):
         self.models = []
 
         for model in models:
             if model not in embedding_cache:
-                embedding_cache[model] = embedding_map[model[0]](*model[1:])
+                embedding_cache[model] = embedding_map[model.model_name](model)
 
             self.models.append(embedding_cache[model])
 
@@ -113,11 +135,11 @@ class ConcatFactory:
         return np.concatenate(vecs)
 
 
-@spacy.Language.factory("similarity")
+@Language.factory("similarity_method")
 class SimilarityFactory:
     def __init__(self, nlp, name, method):
         if method:
-            self.func = spacy_mapping[method]
+            self.func = spacy_similarity_map[method]
 
     def __call__(self, doc):
         if self.func:
@@ -136,12 +158,10 @@ spacy_cache = {}
 embedding_cache = {}
 
 
-def _hash_embedding_model(model: nlp_pb2.EmbeddingModel):
-    return (model.model_type, model.model_name, model.pooling)
-
-
-def _load_spacy(config: nlp_pb2.NlpConfig) -> spacy.Language:
-    models = tuple(_hash_embedding_model(model) for model in config.embedding_models)
+def _load_spacy(config: nlp_pb2.NlpConfig) -> Language:
+    models = tuple(
+        EmbeddingModel.from_protobuf(model) for model in config.embedding_models
+    )
     key = (
         config.language,
         config.spacy_model,
@@ -157,7 +177,7 @@ def _load_spacy(config: nlp_pb2.NlpConfig) -> spacy.Language:
 
         if models:
             nlp.add_pipe(
-                "concat",
+                "embedding_models",
                 last=True,
                 config={"models": models},
             )
@@ -167,7 +187,9 @@ def _load_spacy(config: nlp_pb2.NlpConfig) -> spacy.Language:
             nlp_pb2.SIMILARITY_METHOD_UNSPECIFIED,
         ]:
             nlp.add_pipe(
-                "similarity", last=True, config={"method": config.similarity_method}
+                "similarity_method",
+                last=True,
+                config={"method": config.similarity_method},
             )
 
         spacy_cache[key] = nlp
@@ -176,21 +198,22 @@ def _load_spacy(config: nlp_pb2.NlpConfig) -> spacy.Language:
 
 
 pool_map = {
-    nlp_pb2.POOLING_MEAN: np.mean,
-    nlp_pb2.POOLING_FIRST: lambda vecs: vecs[0],
-    nlp_pb2.POOLING_LAST: lambda vecs: vecs[-1],
-    nlp_pb2.POOLING_MIN: np.min,
-    nlp_pb2.POOLING_MAX: np.max,
-    nlp_pb2.POOLING_SUM: np.sum,
-    nlp_pb2.POOLING_MEDIAN: np.median,
-    nlp_pb2.POOLING_GMEAN: scipy.stats.gmean,
-    nlp_pb2.POOLING_HMEAN: scipy.stats.hmean,
+    nlp_pb2.Pooling.POOLING_MEAN: np.mean,
+    nlp_pb2.Pooling.POOLING_FIRST: lambda vecs: vecs[0],
+    nlp_pb2.Pooling.POOLING_LAST: lambda vecs: vecs[-1],
+    nlp_pb2.Pooling.POOLING_MIN: np.min,
+    nlp_pb2.Pooling.POOLING_MAX: np.max,
+    nlp_pb2.Pooling.POOLING_SUM: np.sum,
+    nlp_pb2.Pooling.POOLING_MEDIAN: np.median,
+    nlp_pb2.Pooling.POOLING_GMEAN: scipy.stats.gmean,
+    nlp_pb2.Pooling.POOLING_HMEAN: scipy.stats.hmean,
 }
 
 embedding_map = {
-    nlp_pb2.EMBEDDING_TYPE_SPACY: SpacyModel,
-    nlp_pb2.EMBEDDING_TYPE_USE: UseModel,
-    nlp_pb2.EMBEDDING_TYPE_SBERT: TransformerModel,
+    nlp_pb2.EmbeddingType.EMBEDDING_TYPE_SPACY: SpacyModel,
+    nlp_pb2.EmbeddingType.EMBEDDING_TYPE_SENTENCE_TRANSFORMERS: SentenceTransformersModel,
+    nlp_pb2.EmbeddingType.EMBEDDING_TYPE_TENSORFLOW_HUB: TensorflowHubModel,
+    # nlp_pb2.EmbeddingType.EMBEDDING_TYPE_TRANSFORMERS: TODO,
 }
 
 
@@ -201,8 +224,6 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
         ctx: grpc.ServicerContext,
     ) -> nlp_pb2.DocBinResponse:
         arg_services_helper.require_all(["config.language"], req, ctx)
-        arg_services_helper.forbid_all(["attributes", "no_attributes"], req, ctx)
-        arg_services_helper.forbid_all(["pipes", "no_pipes"], req, ctx)
 
         for model in req.config.embedding_models:
             arg_services_helper.require_all(
@@ -215,14 +236,16 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
         res = nlp_pb2.DocBinResponse()
 
         nlp = _load_spacy(req.config)
-        nlp_args = {"disable": []}  # if empty, spacy will raise an exception
+        pipes_selection = {"disable": []}  # if empty, spacy will raise an exception
 
-        if req.no_attributes or req.no_pipes:
-            nlp_args = {"enable": custom_components}
-        elif req.pipes:
-            nlp_args = {"enable": itertools.chain(custom_components, req.pipes)}
+        if not req.attributes:
+            pipes_selection = {"enable": custom_components}
+        elif req.WhichOneof("pipes") == nlp_pb2:
+            pipes_selection = {"enable": list(req.enabled_pipes.values)}
+        elif req.WhichOneof("pipes") == "disabled_pipes":
+            pipes_selection = {"disable": list(req.disabled_pipes.values)}
 
-        with nlp.select_pipes(**nlp_args):
+        with nlp.select_pipes(**pipes_selection):
             docs = t.cast(t.List[Doc], list(nlp.pipe(req.texts)))
 
         if levels := req.embedding_levels:
@@ -236,12 +259,12 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
                     for sent in doc.sents:
                         sent._.set("vector", sent.vector)
 
-        if attrs := req.attributes:
-            res.docbin = DocBin(attrs, docs=docs, store_user_data=True).to_bytes()
-        elif req.no_attributes:
-            res.docbin = DocBin([], docs=docs, store_user_data=True).to_bytes()
-        else:
+        if not req.attributes:
             res.docbin = DocBin(docs=docs, store_user_data=True).to_bytes()
+        else:
+            res.docbin = DocBin(
+                req.attributes.values, docs=docs, store_user_data=True
+            ).to_bytes()
 
         return res
 
@@ -351,51 +374,3 @@ def main(address: str):
 
 if __name__ == "__main__":
     app()
-
-
-# [
-#     "",
-#     "IS_ALPHA",
-#     "IS_ASCII",
-#     "IS_DIGIT",
-#     "IS_LOWER",
-#     "IS_PUNCT",
-#     "IS_SPACE",
-#     "IS_TITLE",
-#     "IS_UPPER",
-#     "LIKE_URL",
-#     "LIKE_NUM",
-#     "LIKE_EMAIL",
-#     "IS_STOP",
-#     "IS_OOV_DEPRECATED",
-#     "IS_BRACKET",
-#     "IS_QUOTE",
-#     "IS_LEFT_PUNCT",
-#     "IS_RIGHT_PUNCT",
-#     "IS_CURRENCY",
-#     "ID",
-#     "ORTH",
-#     "LOWER",
-#     "NORM",
-#     "SHAPE",
-#     "PREFIX",
-#     "SUFFIX",
-#     "LENGTH",
-#     "CLUSTER",
-#     "LEMMA",
-#     "POS",
-#     "TAG",
-#     "DEP",
-#     "ENT_IOB",
-#     "ENT_TYPE",
-#     "ENT_ID",
-#     "ENT_KB_ID",
-#     "HEAD",
-#     "SENT_START",
-#     "SENT_END",
-#     "SPACY",
-#     "PROB",
-#     "LANG",
-#     "MORPH",
-#     "IDX",
-# ]

@@ -7,7 +7,7 @@ import spacy
 from arg_services.base.v1 import base_pb2
 from arg_services.nlp.v1 import nlp_pb2
 from spacy.language import Language
-from spacy.tokens import Doc, DocBin, Span, Token  # type: ignore
+from spacy.tokens import Doc, DocBin, Span, Token
 
 from nlp_service import similarity
 
@@ -54,12 +54,12 @@ def inject_vectors(
             token._.set("vector", list2array(token_res.vector))
 
 
-def inject_pipes(nlp: spacy.Language, similarity_method: int = 0) -> None:
-    nlp.add_pipe("vector", last=True)
-    nlp.add_pipe("similarity", last=True, config={"method": similarity_method})
+def inject_pipes(nlp: Language, similarity_method: int = 0) -> None:
+    nlp.add_pipe("user_vector", last=True)
+    nlp.add_pipe("similarity_method", last=True, config={"method": similarity_method})
 
 
-@spacy.Language.component("vector")
+@Language.component("user_vector")
 def _vector_component(doc):
     func = lambda x: x._.vector
 
@@ -70,7 +70,7 @@ def _vector_component(doc):
     return doc
 
 
-@spacy.Language.factory("similarity")
+@Language.factory("similarity_method")
 class SimilarityFactory:
     def __init__(self, nlp, name, method):
         if method:
