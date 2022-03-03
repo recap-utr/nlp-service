@@ -223,17 +223,17 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
         req: nlp_pb2.DocBinRequest,
         ctx: grpc.ServicerContext,
     ) -> nlp_pb2.DocBinResponse:
+        res = nlp_pb2.DocBinResponse()
+
         arg_services_helper.require_all(["config.language"], req, ctx)
 
         for model in req.config.embedding_models:
             arg_services_helper.require_all(
-                ["model_type", "model_name", "pooling"],
+                ["model_type", "model_name"],
                 model,
                 ctx,
                 parent="embedding_models",
             )
-
-        res = nlp_pb2.DocBinResponse()
 
         nlp = _load_spacy(req.config)
         pipes_selection = {"disable": []}  # if empty, spacy will raise an exception
@@ -280,7 +280,7 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
         )
         arg_services_helper.require_all_repeated(
             "config.embedding_models",
-            ["model_type", "model_name", "pooling"],
+            ["model_type", "model_name"],
             req,
             ctx,
         )
@@ -323,7 +323,7 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
         )
         arg_services_helper.require_all_repeated(
             "config.embedding_models",
-            ["model_type", "model_name", "pooling"],
+            ["model_type", "model_name"],
             req,
             ctx,
         )
