@@ -13,6 +13,7 @@ import spacy
 import tensorflow_hub as hub
 import typer
 from arg_services.nlp.v1 import nlp_pb2, nlp_pb2_grpc
+from dataclasses_json import DataClassJsonMixin
 from sentence_transformers import SentenceTransformer
 from spacy.language import Language
 from spacy.tokens import Doc, DocBin
@@ -44,7 +45,7 @@ custom_components = ("embedding_models", "similarity_method")
 
 
 @dataclass(frozen=True, eq=True)
-class EmbeddingModel:
+class EmbeddingModel(DataClassJsonMixin):
     model_type: int
     model_name: str
     pooling_type: t.Optional[int]
@@ -104,9 +105,9 @@ class SpacyModel(ModelBase):
 
         if len(doc) > 1:
             if self.pooling_type and self.pooling_type != nlp_pb2.Pooling.POOLING_MEAN:
-                return pool_map[self.pooling_type](t.vector for t in doc)
+                return pool_map[self.pooling_type]([t.vector for t in doc])  # type: ignore
             elif self.pmean:
-                return pmean((t.vector for t in doc), self.pmean)
+                return pmean([t.vector for t in doc], self.pmean)
 
         return doc.vector
 
@@ -116,9 +117,11 @@ class EmbeddingsFactory:
     def __init__(self, nlp, name, models):
         self.models = []
 
-        for model in models:
+        for model_dict in models:
+            model = EmbeddingModel.from_dict(model_dict)
+
             if model not in embedding_cache:
-                embedding_cache[model] = embedding_map[model.model_name](model)
+                embedding_cache[model] = embedding_map[model.model_type](model)
 
             self.models.append(embedding_cache[model])
 
@@ -179,7 +182,7 @@ def _load_spacy(config: nlp_pb2.NlpConfig) -> Language:
             nlp.add_pipe(
                 "embedding_models",
                 last=True,
-                config={"models": models},
+                config={"models": [model.to_dict() for model in models]},
             )
 
         if config.similarity_method not in [
@@ -197,7 +200,7 @@ def _load_spacy(config: nlp_pb2.NlpConfig) -> Language:
     return spacy_cache[key]
 
 
-pool_map = {
+pool_map: t.Dict[int, t.Callable[[t.Sequence[float]], float]] = {
     nlp_pb2.Pooling.POOLING_MEAN: np.mean,
     nlp_pb2.Pooling.POOLING_FIRST: lambda vecs: vecs[0],
     nlp_pb2.Pooling.POOLING_LAST: lambda vecs: vecs[-1],
@@ -209,7 +212,7 @@ pool_map = {
     nlp_pb2.Pooling.POOLING_HMEAN: scipy.stats.hmean,
 }
 
-embedding_map = {
+embedding_map: t.Dict[int, t.Callable[[EmbeddingModel], ModelBase]] = {
     nlp_pb2.EmbeddingType.EMBEDDING_TYPE_SPACY: SpacyModel,
     nlp_pb2.EmbeddingType.EMBEDDING_TYPE_SENTENCE_TRANSFORMERS: SentenceTransformersModel,
     nlp_pb2.EmbeddingType.EMBEDDING_TYPE_TENSORFLOW_HUB: TensorflowHubModel,
