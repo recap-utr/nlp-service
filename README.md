@@ -109,22 +109,22 @@ config = nlp_pb2.NlpConfig(
   embedding_models=[
     nlp_pb2.EmbeddingModel(
       # First select the type of model you would like to use (e.g., SBERT/Sentence Transformers).
-      model_type=nlp_pb2.EmbeddingType.EMBEDDING_TYPE_SENTENCE_TRANSFORMERS
+      model_type=nlp_pb2.EmbeddingType.EMBEDDING_TYPE_SENTENCE_TRANSFORMERS,
       # Then select the actual model.
       # Any of those specified on the website (https://www.sbert.net/docs/pretrained_models.html) are allowed.
       model_name="all-mpnet-base-v2"
     ),
     nlp_pb2.EmbeddingModel(
       # It is also possible to use a standard spacy model
-      model_type=nlp_pb2.EmbeddingType.EMBEDDING_TYPE_SPACY
-      model_name="en_core_web_lg"
+      model_type=nlp_pb2.EmbeddingType.EMBEDDING_TYPE_SPACY,
+      model_name="en_core_web_lg",
       # Since we have selected a word embedding (i.e., it cannot directly encode sentences), the token vectors need to be aggregated somehow.
       # The default strategy is to use the arithmetic mean, but you are free to use other strategies (e.g., the geometric mean).
       pooling_type=nlp_pb2.Pooling.POOLING_GMEAN
     ),
     nlp_pb2.EmbeddingModel(
-      model_type=nlp_pb2.EmbeddingType.EMBEDDING_TYPE_SPACY
-      model_name="en_core_web_lg"
+      model_type=nlp_pb2.EmbeddingType.EMBEDDING_TYPE_SPACY,
+      model_name="en_core_web_lg",
       # Alternatively, it is also possible to use the generalized mean / power mean.
       # In this example, the selected pmean corresponds to the geometic mean (thus this embedding is identical to the previous one).
       # This approach is based on https://arxiv.org/abs/1803.01400
