@@ -36,7 +36,7 @@ poetry run python -m nlp_service "127.0.0.1:5678"
 # You have to specify the host and port that the docker service should use
 # We are creating a file called .env for this.
 # Please note that for localhost inside Docker, you need to use 0.0.0.0, otherwise you will not be able to connect.
-printf "%s\n" "NLP_HOST=0.0.0.0" "NLP_PORT=5678" > .env
+printf "%s\n" "HOST=0.0.0.0" "PORT=5678" > .env
 # Now we can start the service.
 docker-compose up
 ```

@@ -6,7 +6,5 @@ services:
     volumes:
       - .:/app
     ports:
-      - "${NLP_PORT}:${NLP_PORT}"
-    command:
-      - python -m nlp_service
-      - ${NLP_HOST}:${NLP_PORT}
+      - "${PORT}:${PORT}"
+    command: ${PY} -m nlp_service ${HOST}:${PORT}
