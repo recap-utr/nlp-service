@@ -9,21 +9,22 @@ ARG POETRY_VERSION=1.1.12
 ARG PYTHON_VERSION=3.9
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
-ENV PY="poetry run python"
+ENV PY="python${PYTHON_VERSION}"
 
 WORKDIR /app
 
 RUN apt update \
     && apt install -y curl build-essential software-properties-common \
     && add-apt-repository -y ppa:deadsnakes/ppa \
-    && apt install -y python${PYTHON_VERSION}-dev python${PYTHON_VERSION}-venv \
+    && apt install -y ${PY}-dev ${PY}-venv \
     && apt clean && rm -rf /var/lib/apt/lists*
 
 ENV PATH="/root/.local/bin:${PATH}"
-RUN curl -sSL https://install.python-poetry.org | python${PYTHON_VERSION} -
+RUN curl -sSL https://install.python-poetry.org | ${PY} -
 
 COPY poetry.lock* pyproject.toml ./
-RUN poetry install --no-interaction --no-ansi --no-root --extras server
+RUN poetry env use ${PY} && \
+    poetry install --no-interaction --no-ansi --no-root --extras server
 
-RUN ${PY} -m spacy download en_core_web_lg \
-    && ${PY} -m spacy download en_core_web_sm
+RUN poetry run python -m spacy download en_core_web_lg \
+    && poetry run python -m spacy download en_core_web_sm
