@@ -7,4 +7,12 @@ services:
       - .:/app
     ports:
       - "${PORT}:${PORT}"
-    command: ${PY} -m nlp_service ${HOST}:${PORT}
+    command: poetry run python -m nlp_service ${HOST}:${PORT}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              # device_ids: ["7"]
+              capabilities: ["gpu"]
