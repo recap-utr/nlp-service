@@ -5,7 +5,7 @@ import typing as t
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
-import arg_services_helper
+import arg_services
 import grpc
 import numpy as np
 import scipy.stats
@@ -228,10 +228,10 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
     ) -> nlp_pb2.DocBinResponse:
         res = nlp_pb2.DocBinResponse()
 
-        arg_services_helper.require_all(["config.language"], req, ctx)
+        arg_services.require_all(["config.language"], req, ctx)
 
         for model in req.config.embedding_models:
-            arg_services_helper.require_all(
+            arg_services.require_all(
                 ["model_type", "model_name"],
                 model,
                 ctx,
@@ -278,10 +278,8 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
     ) -> nlp_pb2.VectorsResponse:
         res = nlp_pb2.VectorsResponse()
 
-        arg_services_helper.require_all(
-            ["config.language", "embedding_levels"], req, ctx
-        )
-        arg_services_helper.require_all_repeated(
+        arg_services.require_all(["config.language", "embedding_levels"], req, ctx)
+        arg_services.require_all_repeated(
             "config.embedding_models",
             ["model_type", "model_name"],
             req,
@@ -321,16 +319,16 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
     ) -> nlp_pb2.SimilaritiesResponse:
         res = nlp_pb2.SimilaritiesResponse()
 
-        arg_services_helper.require_all(
+        arg_services.require_all(
             ["config.language", "config.similarity_method"], req, ctx
         )
-        arg_services_helper.require_all_repeated(
+        arg_services.require_all_repeated(
             "config.embedding_models",
             ["model_type", "model_name"],
             req,
             ctx,
         )
-        arg_services_helper.require_all_repeated(
+        arg_services.require_all_repeated(
             "text_tuples",
             ["text1", "text2"],
             req,
@@ -368,10 +366,10 @@ def add_services(server: grpc.Server):
 def main(address: str):
     """Main entry point for the server."""
 
-    arg_services_helper.serve(
+    arg_services.serve(
         address,
         add_services,
-        [arg_services_helper.full_service_name(nlp_pb2, "NlpService")],
+        [arg_services.full_service_name(nlp_pb2, "NlpService")],
     )
 
 
