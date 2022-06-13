@@ -10,7 +10,8 @@ import grpc
 import numpy as np
 import scipy.stats
 import spacy
-import tensorflow_hub as hub
+
+# import tensorflow_hub as hub
 import typer
 from arg_services.nlp.v1 import nlp_pb2, nlp_pb2_grpc
 from dataclasses_json import DataClassJsonMixin
@@ -76,14 +77,14 @@ class SentenceTransformersModel(ModelBase):
         return embeddings[0]
 
 
-class TensorflowHubModel(ModelBase):
-    def __init__(self, model: EmbeddingModel):
-        self.model = hub.load(model.model_name)
+# class TensorflowHubModel(ModelBase):
+#     def __init__(self, model: EmbeddingModel):
+#         self.model = hub.load(model.model_name)
 
-    def vector(self, text: str):
-        embeddings = self.model([text])  # type: ignore
+#     def vector(self, text: str):
+#         embeddings = self.model([text])  # type: ignore
 
-        return embeddings[0].numpy()
+#         return embeddings[0].numpy()
 
 
 def pmean(vectors: t.Any, p: float) -> np.ndarray:
@@ -215,7 +216,7 @@ pool_map: t.Dict[int, t.Callable[[t.Sequence[float]], float]] = {
 embedding_map: t.Dict[int, t.Callable[[EmbeddingModel], ModelBase]] = {
     nlp_pb2.EmbeddingType.EMBEDDING_TYPE_SPACY: SpacyModel,
     nlp_pb2.EmbeddingType.EMBEDDING_TYPE_SENTENCE_TRANSFORMERS: SentenceTransformersModel,
-    nlp_pb2.EmbeddingType.EMBEDDING_TYPE_TENSORFLOW_HUB: TensorflowHubModel,
+    # nlp_pb2.EmbeddingType.EMBEDDING_TYPE_TENSORFLOW_HUB: TensorflowHubModel,
     # nlp_pb2.EmbeddingType.EMBEDDING_TYPE_TRANSFORMERS: TODO,
 }
 
