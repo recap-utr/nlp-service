@@ -13,21 +13,20 @@ nlp-service = "nlp_service.server:app"
 
 [tool.poetry.dependencies]
 python = ">=3.8,<3.11"
-numpy = "^1.22.4"
-scipy = "^1.8.1"
-spacy = "^3.3.1"
-grpcio = "^1.46.3"
-arg-services = "^0.3.8"
-# tensorflow = { version = "^2.9.1", optional = true }
-sentence-transformers = { version = "^2.2.0", optional = true }
-# tensorflow-hub = { version = "^0.12.0", optional = true }
-gensim = { version = "^4.2.0", optional = true }
-pyemd = { version = "^0.5.1", optional = true }
-typer = { version = "^0.4.1", optional = true }
-python-Levenshtein = { version = "^0.12.2", optional = true }
-torch = { version = "^1.11.0", optional = true }
+numpy = "^1.23.3"
+scipy = "^1.9.1"
+spacy = "^3.4.1"
+arg-services = "^0.3.10"
 nltk = "^3.7"
 dataclasses-json = "^0.5.7"
+gensim = { version = "^4.2.0", optional = true }
+pyemd = { version = "^0.5.1", optional = true }
+python-Levenshtein = { version = "^0.12.2", optional = true }
+sentence-transformers = { version = "^2.2.2", optional = true }
+# tensorflow = { version = "^2.10.0", optional = true }
+# tensorflow-hub = { version = "^0.12.0", optional = true }
+torch = { version = "^1.11.0", optional = true }
+typer = { version = "^0.4.1", optional = true }
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -36,12 +35,12 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry.extras]
 wmd = ["gensim"]
 server = [
-    "sentence-transformers",
-    # "tensorflow",
-    # "tensorflow-hub",
     "gensim",
-    "python-levenshtein",
-    "typer",
     "pyemd",
+    "python-levenshtein",
+    "sentence-transformers",
+    # "tensorflow-hub",
+    # "tensorflow",
     "torch",
+    "typer",
 ]
