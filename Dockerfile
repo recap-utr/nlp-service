@@ -5,7 +5,7 @@ ARG UBUNTU_VERSION=20.04
 # https://gitlab.com/nvidia/container-images/cuda/blob/master/doc/supported-tags.md
 FROM nvidia/cuda:${CUDA_VERSION}-cudnn8-runtime-ubuntu${UBUNTU_VERSION}
 
-ARG POETRY_VERSION=1.1.12
+ARG POETRY_VERSION=1.2.0
 ARG PYTHON_VERSION=3.9
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
