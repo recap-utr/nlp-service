@@ -4,7 +4,6 @@ import typing as t
 
 import numpy as np
 import spacy
-from arg_services.base.v1 import base_pb2
 from arg_services.nlp.v1 import nlp_pb2
 from spacy.language import Language
 from spacy.tokens import Doc, DocBin, Span, Token
