@@ -1,5 +1,5 @@
 # https://towardsdatascience.com/a-complete-guide-to-building-a-docker-image-serving-a-machine-learning-system-in-production-d8b5b0533bde
-ARG CUDA_VERSION=11.5.1
+ARG CUDA_VERSION=11.8.0
 ARG UBUNTU_VERSION=20.04
 
 # https://gitlab.com/nvidia/container-images/cuda/blob/master/doc/supported-tags.md
