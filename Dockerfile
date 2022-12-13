@@ -17,7 +17,8 @@ RUN apt update \
     && apt install -y curl build-essential software-properties-common \
     && add-apt-repository -y ppa:deadsnakes/ppa \
     && apt install -y ${PY}-dev ${PY}-venv \
-    && apt clean && rm -rf /var/lib/apt/lists*
+    && apt clean \
+    && rm -rf /var/lib/apt/lists*
 
 ENV PATH="/root/.local/bin:${PATH}"
 RUN curl -sSL https://install.python-poetry.org | ${PY} -
@@ -28,3 +29,5 @@ RUN poetry env use ${PY} && \
 
 RUN poetry run python -m spacy download en_core_web_lg \
     && poetry run python -m spacy download en_core_web_sm
+
+CMD [ "poetry" "run" "python" "-m" "nlp_service" "0.0.0.0:8888" ]

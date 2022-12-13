@@ -6,8 +6,7 @@ services:
     volumes:
       - .:/app
     ports:
-      - "${PORT}:${PORT}"
-    command: poetry run python -m nlp_service ${HOST}:${PORT}
+      - "${PORT}:8000"
     deploy:
       resources:
         reservations:
