@@ -242,9 +242,9 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
         nlp = _load_spacy(req.config)
         pipes_selection = {"disable": []}  # if empty, spacy will raise an exception
 
-        if not req.attributes:
+        if req.HasField("attributes") and not req.attributes.values:
             pipes_selection = {"enable": custom_components}
-        elif req.WhichOneof("pipes") == nlp_pb2:
+        elif req.WhichOneof("pipes") == "enabled_pipes":
             pipes_selection = {"enable": list(req.enabled_pipes.values)}
         elif req.WhichOneof("pipes") == "disabled_pipes":
             pipes_selection = {"disable": list(req.disabled_pipes.values)}
@@ -263,12 +263,12 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
                     for sent in doc.sents:
                         sent._.set("vector", sent.vector)
 
-        if not req.attributes:
-            res.docbin = DocBin(docs=docs, store_user_data=True).to_bytes()
-        else:
+        if req.HasField("attributes"):
             res.docbin = DocBin(
                 req.attributes.values, docs=docs, store_user_data=True
             ).to_bytes()
+        else:
+            res.docbin = DocBin(docs=docs, store_user_data=True).to_bytes()
 
         return res
 
