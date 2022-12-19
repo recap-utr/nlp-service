@@ -1,6 +1,3 @@
-env:
-  PYTHON_VERSION: "3.9"
-  POETRY_VERSION: "1.3.1"
 on:
   push:
     branches:
@@ -8,22 +5,10 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
-    outputs:
-      release_created: ${{ steps.run.outputs.release_created }}
-    steps:
-      - uses: google-github-actions/release-please-action@v3
-        id: run
-        with:
-          release-type: python
-          package-name: nlp-service
-  publish:
-    runs-on: ubuntu-latest
-    needs: release
-    if: ${{ needs.release.outputs.release_created }}
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: cihelper/action-semanticrelease-poetry@v1
         with:
-          python-version: "${{ env.PYTHON_VERSION }}"
-      - run: "pip install poetry==${{ env.POETRY_VERSION }}"
-      - run: "poetry publish --build --username __token__ --password ${{ secrets.PYPI_TOKEN }} --no-interaction -vv"
+          python-version: 3.9
+          poetry-version: 1.3.1
+          pypi-token: ${{ secrets.PYPI_TOKEN }}
