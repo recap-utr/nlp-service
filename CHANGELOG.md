@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.0.0](https://github.com/recap-utr/nlp/compare/v0.3.5...v1.0.0) (2022-12-19)
+
+
+### ⚠ BREAKING CHANGES
+
+* bump version for proper release management
+
+### Features
+
+* bump version for proper release management ([b333934](https://github.com/recap-utr/nlp/commit/b33393469aeb2369122998416a412bf371d52c1e))
+
 ## [0.3.5](https://github.com/recap-utr/nlp/compare/v0.3.4...v0.3.5) (2022-12-19)
 
 
