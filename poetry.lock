@@ -2,14 +2,14 @@
 
 [[package]]
 name = "arg-services"
-version = "1.0.1"
+version = "1.0.2"
 description = "gRPC definitions for microservice-based argumentation machines"
 category = "main"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "arg_services-1.0.1-py3-none-any.whl", hash = "sha256:7986bca1a42397edb1548232f871cd226672fee0d5279b7520a92b2deea0d4a4"},
-    {file = "arg_services-1.0.1.tar.gz", hash = "sha256:8c5c8e10ea08b403abf9137380ec2891a00b8db76d4d570f4817136c7b04df27"},
+    {file = "arg_services-1.0.2-py3-none-any.whl", hash = "sha256:cbd57faf45cd2b48955b2f8264f9bbaa2c3e037ba9aed085bc4b04d72765c2d1"},
+    {file = "arg_services-1.0.2.tar.gz", hash = "sha256:8d9fe7da3764b0d8bde9718c537c499263e2a47b8ee46c7b1d39fbf8297d2113"},
 ]
 
 [package.dependencies]
@@ -2072,4 +2072,4 @@ wmd = ["gensim"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<3.11"
-content-hash = "62a90e2c1ebfbd3bde6a257a4ef21bc14ee7b30f13ed44dae5fb0b4b371fab2b"
+content-hash = "f0111d3b6da3d3abfb5210a436def21b9d2fafb8b8e8eb454918f71291e1bef1"

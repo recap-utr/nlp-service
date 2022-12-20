@@ -16,7 +16,7 @@ python = ">=3.8,<3.11"
 numpy = "^1.23.5"
 scipy = "^1.9.3"
 spacy = "^3.4.3"
-arg-services = "^1.0.1"
+arg-services = "^1.0.2"
 nltk = "^3.8"
 dataclasses-json = "^0.5.7"
 gensim = { version = "^4.2.0", optional = true }
