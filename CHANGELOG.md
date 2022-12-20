@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2](https://github.com/recap-utr/nlp/compare/v1.0.1...v1.0.2) (2022-12-20)
+
+
+### Bug Fixes
+
+* update deps ([9426a15](https://github.com/recap-utr/nlp/commit/9426a1539a07e7628d10d662d0b7dec31a30dbde))
+
 ## [1.0.1](https://github.com/recap-utr/nlp/compare/v1.0.0...v1.0.1) (2022-12-20)
 
 
