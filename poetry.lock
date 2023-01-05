@@ -203,7 +203,7 @@ name = "filelock"
 version = "3.9.0"
 description = "A platform independent file lock."
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.7"
 files = [
     {file = "filelock-3.9.0-py3-none-any.whl", hash = "sha256:f58d535af89bb9ad5cd4df046f741f8553a418c01a7856bf0d173bbc9f6bd16d"},
@@ -365,7 +365,7 @@ name = "huggingface-hub"
 version = "0.11.1"
 description = "Client library to download and publish models, datasets and other repos on the huggingface.co hub"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.7.0"
 files = [
     {file = "huggingface_hub-0.11.1-py3-none-any.whl", hash = "sha256:11eed7aab4fa4d1fb532f2aea3379ef4998d9f6bc24a330834dfedd3dac7f441"},
@@ -739,6 +739,29 @@ machine-learning = ["numpy", "python-crfsuite", "scikit-learn", "scipy"]
 plot = ["matplotlib"]
 tgrep = ["pyparsing"]
 twitter = ["twython"]
+
+[[package]]
+name = "nptyping"
+version = "2.4.1"
+description = "Type hints for NumPy."
+category = "main"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "nptyping-2.4.1-py3-none-any.whl", hash = "sha256:23e8164b1e2c55e872f392ca7516b9b1b0cb400b03b70accaa63998b4106b0b3"},
+    {file = "nptyping-2.4.1.tar.gz", hash = "sha256:57ba684ee5fc5eb681ee04270ee94adb879e4372ce6b640defa08ace8e1df295"},
+]
+
+[package.dependencies]
+numpy = {version = ">=1.20.0,<2.0.0", markers = "python_version >= \"3.8\""}
+typing-extensions = {version = ">=4.0.0,<5.0.0", markers = "python_version < \"3.10\""}
+
+[package.extras]
+build = ["invoke (>=1.6.0)", "pip-tools (>=6.5.0)"]
+complete = ["pandas", "pandas-stubs-fork"]
+dev = ["autoflake", "beartype (<0.10.0)", "beartype (>=0.10.0)", "black", "codecov (>=2.1.0)", "coverage", "feedparser", "invoke (>=1.6.0)", "isort", "mypy", "pandas", "pandas-stubs-fork", "pip-tools (>=6.5.0)", "pylint", "pyright", "setuptools", "typeguard", "wheel"]
+pandas = ["pandas", "pandas-stubs-fork"]
+qa = ["autoflake", "beartype (<0.10.0)", "beartype (>=0.10.0)", "black", "codecov (>=2.1.0)", "coverage", "feedparser", "isort", "mypy", "pylint", "pyright", "setuptools", "typeguard", "wheel"]
 
 [[package]]
 name = "numpy"
@@ -1202,7 +1225,7 @@ name = "pyyaml"
 version = "6.0"
 description = "YAML parser and emitter for Python"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.6"
 files = [
     {file = "PyYAML-6.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:d4db7c7aef085872ef65a8fd7d6d09a14ae91f691dec3e87ee5ee0539d516f53"},
@@ -1934,7 +1957,7 @@ name = "tokenizers"
 version = "0.13.2"
 description = "Fast and Customizable Tokenizers"
 category = "main"
-optional = true
+optional = false
 python-versions = "*"
 files = [
     {file = "tokenizers-0.13.2-cp310-cp310-macosx_10_11_x86_64.whl", hash = "sha256:a6f36b1b499233bb4443b5e57e20630c5e02fba61109632f5e00dab970440157"},
@@ -2086,7 +2109,7 @@ name = "transformers"
 version = "4.25.1"
 description = "State-of-the-art Machine Learning for JAX, PyTorch and TensorFlow"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.7.0"
 files = [
     {file = "transformers-4.25.1-py3-none-any.whl", hash = "sha256:60f1be15e17e4a54373c787c713ec149dabcc63464131ac45611618fe7c2016e"},
@@ -2247,4 +2270,4 @@ wmd = ["gensim"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<3.11"
-content-hash = "0e585a940ec8a0a2d085a12544414a9dfd93b2ccc479859ae2a17776c4b11d10"
+content-hash = "515be573382cd773bccfffb974d3b46983d507cde165ec1dbdce42ded0e408dc"

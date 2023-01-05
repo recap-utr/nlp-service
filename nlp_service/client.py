@@ -5,17 +5,21 @@ import typing as t
 import numpy as np
 import spacy
 from arg_services.nlp.v1 import nlp_pb2
-from spacy.language import Language
+from spacy.language import Language as SpacyLanguage
 from spacy.tokens import Doc, DocBin, Span, Token
 
-from nlp_service import similarity
+from nlp_service.similarity import SimilarityFactory as SimilarityFactory
+from nlp_service.types import ArrayLike, NumpyVector
 
 Doc.set_extension("vector", default=None)
 Span.set_extension("vector", default=None)
 Token.set_extension("vector", default=None)
 
 
-def blank(language: str, similarity_method: int = 0) -> Language:
+def blank(
+    language: str,
+    similarity_method: nlp_pb2.SimilarityMethod.ValueType = nlp_pb2.SimilarityMethod.SIMILARITY_METHOD_UNSPECIFIED,
+) -> SpacyLanguage:
     spacy_lang = spacy.blank(language)
     inject_pipes(spacy_lang, similarity_method)
 
@@ -23,7 +27,9 @@ def blank(language: str, similarity_method: int = 0) -> Language:
 
 
 def docbin2docs(
-    docbin_bytes: bytes, language: t.Union[str, Language], similarity_method: int = 0
+    docbin_bytes: bytes,
+    language: t.Union[str, SpacyLanguage],
+    similarity_method: nlp_pb2.SimilarityMethod.ValueType = nlp_pb2.SimilarityMethod.SIMILARITY_METHOD_UNSPECIFIED,
 ) -> t.Tuple[Doc, ...]:
     if isinstance(language, str):
         language = blank(language, similarity_method)
@@ -33,7 +39,7 @@ def docbin2docs(
     return tuple(docbin.get_docs(language.vocab))
 
 
-def list2array(values: t.Iterable[float]) -> np.ndarray:
+def list2array(values: ArrayLike) -> NumpyVector:
     return np.array(values)
 
 
@@ -53,12 +59,15 @@ def inject_vectors(
             token._.set("vector", list2array(token_res.vector))
 
 
-def inject_pipes(nlp: Language, similarity_method: int = 0) -> None:
+def inject_pipes(
+    nlp: SpacyLanguage,
+    similarity_method: nlp_pb2.SimilarityMethod.ValueType = nlp_pb2.SimilarityMethod.SIMILARITY_METHOD_UNSPECIFIED,
+) -> None:
     nlp.add_pipe("user_vector", last=True)
     nlp.add_pipe("similarity_method", last=True, config={"method": similarity_method})
 
 
-@Language.component("user_vector")
+@SpacyLanguage.component("user_vector")
 def _vector_component(doc):
     func = lambda x: x._.vector
 
@@ -67,18 +76,3 @@ def _vector_component(doc):
     doc.user_token_hooks["vector"] = func
 
     return doc
-
-
-@Language.factory("similarity_method")
-class SimilarityFactory:
-    def __init__(self, nlp, name, method):
-        if method:
-            self.func = similarity.mapping[method]
-
-    def __call__(self, doc):
-        if self.func:
-            doc.user_hooks["similarity"] = self.func
-            doc.user_span_hooks["similarity"] = self.func
-            doc.user_token_hooks["similarity"] = self.func
-
-        return doc

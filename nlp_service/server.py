@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import itertools
 import typing as t
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -10,16 +9,21 @@ import grpc
 import numpy as np
 import scipy.stats
 import spacy
-
-# import tensorflow_hub as hub
+import torch
 import typer
 from arg_services.nlp.v1 import nlp_pb2, nlp_pb2_grpc
 from dataclasses_json import DataClassJsonMixin
 from sentence_transformers import SentenceTransformer
-from spacy.language import Language
+from spacy.language import Language as SpacyLanguage
 from spacy.tokens import Doc, DocBin
+from thinc.types import Floats1d as SpacyVector
+from torch.cuda import is_available as is_cuda_available
 
-from nlp_service.similarity import spacy_mapping as spacy_similarity_map
+# import tensorflow_hub as hub
+from transformers import AutoModel, AutoTokenizer
+
+from nlp_service.similarity import SimilarityFactory as SimilarityFactory
+from nlp_service.types import ArrayLike, NumpyMatrix, NumpyVector
 
 # https://spacy.io/usage/processing-pipelines#built-in
 spacy_components = (
@@ -38,7 +42,7 @@ spacy_components = (
     # tok2vec, transformer
 )
 custom_components = ("embedding_models", "similarity_method")
-# custom_components = []
+torch_device = "cuda" if is_cuda_available() else "cpu"
 
 # TODO: Extract spacy-specific code into its own file.
 # Benefit: We could refactor the code s.t. the spacy `nlp` object can be
@@ -47,10 +51,10 @@ custom_components = ("embedding_models", "similarity_method")
 
 @dataclass(frozen=True, eq=True)
 class EmbeddingModel(DataClassJsonMixin):
-    model_type: int
+    model_type: nlp_pb2.EmbeddingType.ValueType
     model_name: str
-    pooling_type: t.Optional[int]
-    pmean: t.Optional[float]
+    pooling_type: nlp_pb2.Pooling.ValueType
+    pmean: float
 
     @classmethod
     def from_protobuf(cls, pb: nlp_pb2.EmbeddingModel) -> EmbeddingModel:
@@ -63,16 +67,18 @@ class ModelBase(ABC):
         pass
 
     @abstractmethod
-    def vector(self, text: str) -> np.ndarray:
+    def vector(self, text: str) -> SpacyVector:
         pass
 
 
 class SentenceTransformersModel(ModelBase):
     def __init__(self, model: EmbeddingModel):
-        self.model = SentenceTransformer(model.model_name)
+        self.model = SentenceTransformer(model.model_name, device=torch_device)
 
-    def vector(self, text: str):
-        embeddings = self.model.encode([text])
+    def vector(self, text: str) -> SpacyVector:
+        embeddings = t.cast(
+            NumpyVector, self.model.encode([text], convert_to_numpy=True)
+        )
 
         return embeddings[0]
 
@@ -87,8 +93,7 @@ class SentenceTransformersModel(ModelBase):
 #         return embeddings[0].numpy()
 
 
-def pmean(vectors: t.Any, p: float) -> np.ndarray:
-    # vectors: t.Iterable[np.ndarray]
+def pmean(vectors: ArrayLike, p: float) -> SpacyVector:
     return np.power(
         np.mean(np.power(np.array(vectors, dtype=complex), p), axis=0), 1 / p
     ).real
@@ -97,26 +102,33 @@ def pmean(vectors: t.Any, p: float) -> np.ndarray:
 class SpacyModel(ModelBase):
     def __init__(self, model: EmbeddingModel):
         self.model = spacy.load(model.model_name)
-        self.pooling_type = t.cast(nlp_pb2.Pooling.V, model.pooling_type)
+        self.pooling_type = model.pooling_type
         self.pmean = model.pmean
 
-    def vector(self, text: str):
+    def vector(self, text: str) -> SpacyVector:
         with self.model.select_pipes(enable=["senter"]):
             doc = self.model(text)
 
         if len(doc) > 1:
             if self.pooling_type and self.pooling_type != nlp_pb2.Pooling.POOLING_MEAN:
-                return pool_map[self.pooling_type]([t.vector for t in doc])  # type: ignore
+                return t.cast(
+                    SpacyVector,
+                    pool_map[self.pooling_type](
+                        np.array([token.vector for token in doc])
+                    ),
+                )
             elif self.pmean:
-                return pmean([t.vector for t in doc], self.pmean)
+                return pmean(
+                    [t.cast(NumpyVector, token.vector) for token in doc], self.pmean
+                )
 
         return doc.vector
 
 
-@Language.factory("embedding_models")
+@SpacyLanguage.factory("embedding_models")
 class EmbeddingsFactory:
     def __init__(self, nlp, name, models):
-        self.models = []
+        self.models: list[ModelBase] = []
 
         for model_dict in models:
             model = EmbeddingModel.from_dict(model_dict)
@@ -134,39 +146,21 @@ class EmbeddingsFactory:
 
         return doc
 
-    def vector(self, obj):
-        vecs = [model.vector(obj.text) for model in self.models]
-        return np.concatenate(vecs)
+    def vector(self, obj) -> SpacyVector:
+        vecs = np.array([model.vector(obj.text) for model in self.models])
+        return t.cast(SpacyVector, np.concatenate(vecs))
 
 
-@Language.factory("similarity_method")
-class SimilarityFactory:
-    def __init__(self, nlp, name, method):
-        if method:
-            self.func = spacy_similarity_map[method]
-
-    def __call__(self, doc):
-        if self.func:
-            doc.user_hooks["similarity"] = self.func
-            doc.user_span_hooks["similarity"] = self.func
-            doc.user_token_hooks["similarity"] = self.func
-
-        return doc
+SpacyKey = tuple[str, str, tuple[EmbeddingModel, ...]]
+spacy_cache: dict[SpacyKey, SpacyLanguage] = {}
+embedding_cache: dict[EmbeddingModel, ModelBase] = {}
 
 
-# Doc.set_extension("vector", default=None)
-# Span.set_extension("vector", default=None)
-# Token.set_extension("vector", default=None)
-
-spacy_cache = {}
-embedding_cache = {}
-
-
-def _load_spacy(config: nlp_pb2.NlpConfig) -> Language:
+def _load_spacy(config: nlp_pb2.NlpConfig) -> SpacyLanguage:
     models = tuple(
         EmbeddingModel.from_protobuf(model) for model in config.embedding_models
     )
-    key = (
+    key: SpacyKey = (
         config.language,
         config.spacy_model,
         models,
@@ -201,23 +195,23 @@ def _load_spacy(config: nlp_pb2.NlpConfig) -> Language:
     return spacy_cache[key]
 
 
-pool_map: t.Dict[int, t.Callable[[t.Sequence[float]], float]] = {
-    nlp_pb2.Pooling.POOLING_MEAN: np.mean,
-    nlp_pb2.Pooling.POOLING_FIRST: lambda vecs: vecs[0],
-    nlp_pb2.Pooling.POOLING_LAST: lambda vecs: vecs[-1],
-    nlp_pb2.Pooling.POOLING_MIN: np.min,
-    nlp_pb2.Pooling.POOLING_MAX: np.max,
-    nlp_pb2.Pooling.POOLING_SUM: np.sum,
-    nlp_pb2.Pooling.POOLING_MEDIAN: np.median,
-    nlp_pb2.Pooling.POOLING_GMEAN: scipy.stats.gmean,
-    nlp_pb2.Pooling.POOLING_HMEAN: scipy.stats.hmean,
+pool_map: t.Dict[int, t.Callable[[NumpyMatrix], NumpyVector]] = {
+    nlp_pb2.Pooling.POOLING_MEAN: lambda x: np.mean(x, axis=0),
+    nlp_pb2.Pooling.POOLING_FIRST: lambda x: x[0],
+    nlp_pb2.Pooling.POOLING_LAST: lambda x: x[-1],
+    nlp_pb2.Pooling.POOLING_MIN: lambda x: np.min(x, axis=0),
+    nlp_pb2.Pooling.POOLING_MAX: lambda x: np.max(x, axis=0),
+    nlp_pb2.Pooling.POOLING_SUM: lambda x: np.sum(x, axis=0),
+    nlp_pb2.Pooling.POOLING_MEDIAN: lambda x: np.median(x, axis=0),
+    nlp_pb2.Pooling.POOLING_GMEAN: lambda x: scipy.stats.gmean(x, axis=0),
+    nlp_pb2.Pooling.POOLING_HMEAN: lambda x: scipy.stats.hmean(x, axis=0),
 }
 
 embedding_map: t.Dict[int, t.Callable[[EmbeddingModel], ModelBase]] = {
     nlp_pb2.EmbeddingType.EMBEDDING_TYPE_SPACY: SpacyModel,
     nlp_pb2.EmbeddingType.EMBEDDING_TYPE_SENTENCE_TRANSFORMERS: SentenceTransformersModel,
     # nlp_pb2.EmbeddingType.EMBEDDING_TYPE_TENSORFLOW_HUB: TensorflowHubModel,
-    # nlp_pb2.EmbeddingType.EMBEDDING_TYPE_TRANSFORMERS: TODO,
+    nlp_pb2.EmbeddingType.EMBEDDING_TYPE_TRANSFORMERS: TransformersModel,
 }
 
 
@@ -290,7 +284,7 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
         nlp = _load_spacy(req.config)
 
         with nlp.select_pipes(enable=custom_components):
-            docs = t.cast(t.List[Doc], list(nlp.pipe(req.texts)))
+            docs = nlp.pipe(req.texts)
 
         for doc in docs:
             vector_res = nlp_pb2.VectorResponse()
@@ -337,12 +331,12 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
         )
 
         nlp = _load_spacy(req.config)
-        text_tuples = [(x.text1, x.text2) for x in req.text_tuples]
+        text_tuples = ((x.text1, x.text2) for x in req.text_tuples)
         texts1, texts2 = zip(*text_tuples)
 
         with nlp.select_pipes(enable=custom_components):
-            docs1 = t.cast(t.List[Doc], list(nlp.pipe(texts1)))
-            docs2 = t.cast(t.List[Doc], list(nlp.pipe(texts2)))
+            docs1 = nlp.pipe(texts1)
+            docs2 = nlp.pipe(texts2)
 
         res.similarities.extend(
             doc1.similarity(doc2) for doc1, doc2 in zip(docs1, docs2)
