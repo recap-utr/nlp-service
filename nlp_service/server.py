@@ -71,6 +71,47 @@ class ModelBase(ABC):
         pass
 
 
+class TransformersModel(ModelBase):
+    def __init__(self, model: EmbeddingModel):
+        # Load model from HuggingFace Hub
+        try:
+            self.tokenizer = AutoTokenizer.from_pretrained(
+                model.model_name, use_fast=True
+            )
+        except Exception:
+            self.tokenizer = AutoTokenizer.from_pretrained(model.model_name)
+
+        self.model = AutoModel.from_pretrained(model.model_name).to(torch_device)
+
+    # Mean Pooling - Take attention mask into account for correct averaging
+    def mean_pooling(self, model_output, attention_mask) -> torch.Tensor:
+        # First element of model_output contains all token embeddings
+        token_embeddings = model_output[0]
+        input_mask_expanded = (
+            attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
+        )
+        return torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(
+            input_mask_expanded.sum(1), min=1e-9
+        )
+
+    def vector(self, text: str) -> SpacyVector:
+        # Tokenize sentences
+        encoded_input = self.tokenizer(
+            text, padding=True, truncation=True, return_tensors="pt"
+        )
+        encoded_input = encoded_input.to(torch_device)
+        # Compute token embeddings
+        with torch.no_grad():
+            model_output = self.model(**encoded_input)
+        # Perform pooling
+        sentence_embeddings = self.mean_pooling(
+            model_output, encoded_input["attention_mask"]
+        )
+        # Normalize embeddings; is this needed? Normilize? Logit?
+        # sentence_embeddings = F.normalize(sentence_embeddings, p=2, dim=1)
+        return sentence_embeddings[0].cpu().numpy()
+
+
 class SentenceTransformersModel(ModelBase):
     def __init__(self, model: EmbeddingModel):
         self.model = SentenceTransformer(model.model_name, device=torch_device)
