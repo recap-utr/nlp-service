@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.1.0](https://github.com/recap-utr/nlp/compare/v1.0.2...v1.1.0) (2023-01-05)
+
+
+### Features
+
+* add huggingface transformers model ([e60da2b](https://github.com/recap-utr/nlp/commit/e60da2b6d289fcdaa432f92178256c8458617a74))
+* add public interface in init ([bc4cf24](https://github.com/recap-utr/nlp/commit/bc4cf246c5cba4fbaedf29263c6612bebb8b9f8f))
+* enforce stricter typing ([e6f49b0](https://github.com/recap-utr/nlp/commit/e6f49b09be6fdc3c34897f5dc2d899da22766dd2))
+
 ## [1.0.2](https://github.com/recap-utr/nlp/compare/v1.0.1...v1.0.2) (2022-12-20)
 
 
