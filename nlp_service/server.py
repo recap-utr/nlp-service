@@ -12,7 +12,7 @@ import spacy
 import torch
 import typer
 from arg_services.nlp.v1 import nlp_pb2, nlp_pb2_grpc
-from dataclasses_json import DataClassJsonMixin
+from mashumaro.mixins.dict import DataClassDictMixin
 from sentence_transformers import SentenceTransformer
 from spacy.language import Language as SpacyLanguage
 from spacy.tokens import Doc, DocBin
@@ -50,7 +50,7 @@ torch_device = "cuda" if is_cuda_available() else "cpu"
 
 
 @dataclass(frozen=True, eq=True)
-class EmbeddingModel(DataClassJsonMixin):
+class EmbeddingModel(DataClassDictMixin):
     model_type: nlp_pb2.EmbeddingType.ValueType
     model_name: str
     pooling_type: nlp_pb2.Pooling.ValueType
