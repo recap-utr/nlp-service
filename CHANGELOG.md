@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/recap-utr/nlp/compare/v1.1.0...v1.1.1) (2023-01-06)
+
+
+### Bug Fixes
+
+* replace dataclasses-json with mashumaro ([bccf2ac](https://github.com/recap-utr/nlp/commit/bccf2ac3083b0704bdc7de7107054bd7c263db91))
+
 ## [1.1.0](https://github.com/recap-utr/nlp/compare/v1.0.2...v1.1.0) (2023-01-05)
 
 
