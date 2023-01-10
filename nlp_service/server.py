@@ -174,10 +174,10 @@ class EmbeddingsFactory:
         for model_dict in models:
             model = EmbeddingModel.from_dict(model_dict)
 
-            if model not in embedding_cache:
-                embedding_cache[model] = embedding_map[model.model_type](model)
+            if model not in model_cache:
+                model_cache[model] = embedding_map[model.model_type](model)
 
-            self.models.append(embedding_cache[model])
+            self.models.append(model_cache[model])
 
     def __call__(self, doc):
         if len(self.models) > 0:
@@ -194,7 +194,7 @@ class EmbeddingsFactory:
 
 SpacyKey = tuple[str, str, tuple[EmbeddingModel, ...]]
 spacy_cache: dict[SpacyKey, SpacyLanguage] = {}
-embedding_cache: dict[EmbeddingModel, ModelBase] = {}
+model_cache: dict[EmbeddingModel, ModelBase] = {}
 
 
 def _load_spacy(config: nlp_pb2.NlpConfig) -> SpacyLanguage:
