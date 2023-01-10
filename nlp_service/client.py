@@ -63,12 +63,12 @@ def inject_pipes(
     nlp: SpacyLanguage,
     similarity_method: nlp_pb2.SimilarityMethod.ValueType = nlp_pb2.SimilarityMethod.SIMILARITY_METHOD_UNSPECIFIED,
 ) -> None:
-    nlp.add_pipe("user_vector", last=True)
+    nlp.add_pipe("remote_vector", last=True)
     nlp.add_pipe("similarity_factory", last=True, config={"method": similarity_method})
 
 
-@SpacyLanguage.component("user_vector")
-def _vector_component(doc):
+@SpacyLanguage.component("remote_vector")
+def remote_vector(doc):
     func = lambda x: x._.vector
 
     doc.user_hooks["vector"] = func
