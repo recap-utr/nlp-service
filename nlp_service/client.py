@@ -64,7 +64,7 @@ def inject_pipes(
     similarity_method: nlp_pb2.SimilarityMethod.ValueType = nlp_pb2.SimilarityMethod.SIMILARITY_METHOD_UNSPECIFIED,
 ) -> None:
     nlp.add_pipe("user_vector", last=True)
-    nlp.add_pipe("similarity_method", last=True, config={"method": similarity_method})
+    nlp.add_pipe("similarity_factory", last=True, config={"method": similarity_method})
 
 
 @SpacyLanguage.component("user_vector")

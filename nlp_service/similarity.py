@@ -245,7 +245,7 @@ spacy_mapping: dict[
 }
 
 
-@SpacyLanguage.factory("similarity_method")
+@SpacyLanguage.factory("similarity_factory")
 class SimilarityFactory:
     def __init__(self, nlp, name, method):
         if method:

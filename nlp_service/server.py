@@ -18,7 +18,6 @@ from spacy.language import Language as SpacyLanguage
 from spacy.tokens import Doc, DocBin
 from thinc.types import Floats1d as SpacyVector
 from torch.cuda import is_available as is_cuda_available
-
 # import tensorflow_hub as hub
 from transformers import AutoModel, AutoTokenizer
 
@@ -41,7 +40,7 @@ spacy_components = (
     "sentencizer",
     # tok2vec, transformer
 )
-custom_components = ("embedding_models", "similarity_method")
+custom_components = ("embeddings_factory", "similarity_factory")
 torch_device = "cuda" if is_cuda_available() else "cpu"
 
 # TODO: Extract spacy-specific code into its own file.
@@ -166,7 +165,7 @@ class SpacyModel(ModelBase):
         return doc.vector
 
 
-@SpacyLanguage.factory("embedding_models")
+@SpacyLanguage.factory("embeddings_factory")
 class EmbeddingsFactory:
     def __init__(self, nlp, name, models):
         self.models: list[ModelBase] = []
@@ -195,6 +194,7 @@ class EmbeddingsFactory:
 SpacyKey = tuple[str, str, tuple[EmbeddingModel, ...]]
 spacy_cache: dict[SpacyKey, SpacyLanguage] = {}
 model_cache: dict[EmbeddingModel, ModelBase] = {}
+vector_cache: dict[SpacyKey, SpacyVector] = {}
 
 
 def _load_spacy(config: nlp_pb2.NlpConfig) -> SpacyLanguage:
@@ -216,7 +216,7 @@ def _load_spacy(config: nlp_pb2.NlpConfig) -> SpacyLanguage:
 
         if models:
             nlp.add_pipe(
-                "embedding_models",
+                "embeddings_factory",
                 last=True,
                 config={"models": [model.to_dict() for model in models]},
             )
@@ -226,7 +226,7 @@ def _load_spacy(config: nlp_pb2.NlpConfig) -> SpacyLanguage:
             nlp_pb2.SIMILARITY_METHOD_UNSPECIFIED,
         ]:
             nlp.add_pipe(
-                "similarity_method",
+                "similarity_factory",
                 last=True,
                 config={"method": config.similarity_method},
             )
@@ -271,7 +271,7 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
                 ["model_type", "model_name"],
                 model,
                 ctx,
-                parent="embedding_models",
+                parent="embeddings_factory",
             )
 
         nlp = _load_spacy(req.config)
