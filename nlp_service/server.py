@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import itertools
 import typing as t
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -15,14 +16,15 @@ from arg_services.nlp.v1 import nlp_pb2, nlp_pb2_grpc
 from mashumaro.mixins.dict import DataClassDictMixin
 from sentence_transformers import SentenceTransformer
 from spacy.language import Language as SpacyLanguage
-from spacy.tokens import Doc, DocBin
+from spacy.tokens import Doc, DocBin, Span, Token
 from thinc.types import Floats1d as SpacyVector
 from torch.cuda import is_available as is_cuda_available
-# import tensorflow_hub as hub
 from transformers import AutoModel, AutoTokenizer
 
 from nlp_service.similarity import SimilarityFactory as SimilarityFactory
 from nlp_service.types import ArrayLike, NumpyMatrix, NumpyVector
+
+# import tensorflow_hub as hub
 
 # https://spacy.io/usage/processing-pipelines#built-in
 spacy_components = (
@@ -192,12 +194,12 @@ class EmbeddingsFactory:
 
 
 SpacyKey = tuple[str, str, tuple[EmbeddingModel, ...]]
-spacy_cache: dict[SpacyKey, SpacyLanguage] = {}
+SpacyCache = t.Tuple[SpacyLanguage, dict[str, Doc]]
+spacy_cache: dict[SpacyKey, SpacyCache] = {}
 model_cache: dict[EmbeddingModel, ModelBase] = {}
-vector_cache: dict[SpacyKey, SpacyVector] = {}
 
 
-def _load_spacy(config: nlp_pb2.NlpConfig) -> SpacyLanguage:
+def _load_spacy(config: nlp_pb2.NlpConfig) -> SpacyCache:
     models = tuple(
         EmbeddingModel.from_protobuf(model) for model in config.embedding_models
     )
@@ -231,7 +233,7 @@ def _load_spacy(config: nlp_pb2.NlpConfig) -> SpacyLanguage:
                 config={"method": config.similarity_method},
             )
 
-        spacy_cache[key] = nlp
+        spacy_cache[key] = (nlp, {})
 
     return spacy_cache[key]
 
@@ -274,7 +276,9 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
                 parent="embeddings_factory",
             )
 
-        nlp = _load_spacy(req.config)
+        # TODO: Cache not used due to the ability to enable/disable certain pipes
+        nlp, _ = _load_spacy(req.config)
+
         pipes_selection = {"disable": []}  # if empty, spacy will raise an exception
 
         if req.HasField("attributes") and not req.attributes.values:
@@ -285,7 +289,7 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
             pipes_selection = {"disable": list(req.disabled_pipes.values)}
 
         with nlp.select_pipes(**pipes_selection):
-            docs = t.cast(t.List[Doc], list(nlp.pipe(req.texts)))
+            docs = list(nlp.pipe(req.texts))
 
         if levels := req.embedding_levels:
             for doc in docs:
@@ -322,12 +326,14 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
             ctx,
         )
 
-        nlp = _load_spacy(req.config)
+        nlp, doc_cache = _load_spacy(req.config)
 
-        with nlp.select_pipes(enable=custom_components):
-            docs = nlp.pipe(req.texts)
+        if new_texts := [text for text in req.texts if text not in doc_cache]:
+            with nlp.select_pipes(enable=custom_components):
+                doc_cache.update(dict(zip(new_texts, nlp.pipe(new_texts))))
 
-        for doc in docs:
+        for text in req.texts:
+            doc = doc_cache[text]
             vector_res = nlp_pb2.VectorResponse()
 
             for level in req.embedding_levels:
@@ -371,16 +377,17 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
             ctx,
         )
 
-        nlp = _load_spacy(req.config)
-        text_tuples = ((x.text1, x.text2) for x in req.text_tuples)
-        texts1, texts2 = zip(*text_tuples)
+        nlp, doc_cache = _load_spacy(req.config)
+        texts = itertools.chain.from_iterable(
+            ((x.text1, x.text2) for x in req.text_tuples)
+        )
 
-        with nlp.select_pipes(enable=custom_components):
-            docs1 = nlp.pipe(texts1)
-            docs2 = nlp.pipe(texts2)
+        if new_texts := [text for text in texts if text not in doc_cache]:
+            with nlp.select_pipes(enable=custom_components):
+                doc_cache.update(dict(zip(new_texts, nlp.pipe(new_texts))))
 
         res.similarities.extend(
-            doc1.similarity(doc2) for doc1, doc2 in zip(docs1, docs2)
+            doc_cache[x.text1].similarity(doc_cache[x.text2]) for x in req.text_tuples
         )
 
         return res
