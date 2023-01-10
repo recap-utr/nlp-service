@@ -1,11 +1,11 @@
 # https://towardsdatascience.com/a-complete-guide-to-building-a-docker-image-serving-a-machine-learning-system-in-production-d8b5b0533bde
 ARG CUDA_VERSION=11.8.0
-ARG UBUNTU_VERSION=20.04
+ARG UBUNTU_VERSION=22.04
 
 # https://gitlab.com/nvidia/container-images/cuda/blob/master/doc/supported-tags.md
 FROM nvidia/cuda:${CUDA_VERSION}-cudnn8-runtime-ubuntu${UBUNTU_VERSION}
 
-ARG POETRY_VERSION=1.2.0
+ARG POETRY_VERSION=1.3.1
 ARG PYTHON_VERSION=3.9
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
