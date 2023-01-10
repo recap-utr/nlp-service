@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/recap-utr/nlp/compare/v1.1.1...v1.2.0) (2023-01-10)
+
+
+### Features
+
+* **server:** add cache for spacy docs ([107e6b9](https://github.com/recap-utr/nlp/commit/107e6b93d14e9dd472bee80d5b673201bcc6e05a))
+
 ## [1.1.1](https://github.com/recap-utr/nlp/compare/v1.1.0...v1.1.1) (2023-01-06)
 
 
