@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/recap-utr/nlp-service/compare/v1.2.0...v1.2.1) (2023-01-11)
+
+
+### Bug Fixes
+
+* remove server from init ([435772d](https://github.com/recap-utr/nlp-service/commit/435772d1b5e100a23f48d18a5c9212bcb49bb18d))
+
 ## [1.2.0](https://github.com/recap-utr/nlp/compare/v1.1.1...v1.2.0) (2023-01-10)
 
 
