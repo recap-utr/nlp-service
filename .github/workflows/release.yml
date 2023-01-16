@@ -8,7 +8,21 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: cihelper/action-semanticrelease-poetry@v1
+        id: semanticrelease
         with:
           python-version: 3.9
           poetry-version: 1.3.1
           pypi-token: ${{ secrets.PYPI_TOKEN }}
+      - if: ${{ steps.semanticrelease.outputs.released == 'true' }}
+        uses: cihelper/action-docker-publish@v1
+        name: "Docker CPU"
+        with:
+          version: ${{ format('v{0}', steps.semanticrelease.outputs.version) }}
+          dockerfile: Dockerfile
+      - if: ${{ steps.semanticrelease.outputs.released == 'true' }}
+        uses: cihelper/action-docker-publish@v1
+        name: "Docker CUDA"
+        with:
+          version: ${{ format('v{0}', steps.semanticrelease.outputs.version) }}
+          tag-suffix: "-cuda"
+          dockerfile: Dockerfile.cuda
