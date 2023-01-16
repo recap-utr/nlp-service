@@ -1,33 +1,33 @@
-# https://towardsdatascience.com/a-complete-guide-to-building-a-docker-image-serving-a-machine-learning-system-in-production-d8b5b0533bde
-ARG CUDA_VERSION=11.8.0
-ARG UBUNTU_VERSION=22.04
+ARG PYTHON_VERSION=3.9
 
-# https://gitlab.com/nvidia/container-images/cuda/blob/master/doc/supported-tags.md
-FROM nvidia/cuda:${CUDA_VERSION}-cudnn8-runtime-ubuntu${UBUNTU_VERSION}
+FROM python:${PYTHON_VERSION}-slim
 
 ARG POETRY_VERSION=1.3.1
-ARG PYTHON_VERSION=3.9
+# ARG SPACY_MODEL=en_core_web_lg
+
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
-ENV PY="python${PYTHON_VERSION}"
 
-WORKDIR /app
+WORKDIR /dependencies
 
 RUN apt update \
-    && apt install -y curl build-essential software-properties-common \
-    && add-apt-repository -y ppa:deadsnakes/ppa \
-    && apt install -y ${PY}-dev ${PY}-venv \
+    && apt install -y curl build-essential \
     && apt clean \
-    && rm -rf /var/lib/apt/lists*
+    && rm -rf /var/lib/apt/lists/*
 
 ENV PATH="/root/.local/bin:${PATH}"
-RUN curl -sSL https://install.python-poetry.org | ${PY} -
+RUN curl -sSL https://install.python-poetry.org | python - \
+    && poetry config virtualenvs.in-project true
 
 COPY poetry.lock* pyproject.toml ./
-RUN poetry env use ${PY} && \
-    poetry install --no-interaction --no-ansi --no-root --extras server
+RUN poetry install --no-interaction --no-ansi --extras server
 
-RUN poetry run python -m spacy download en_core_web_lg \
-    && poetry run python -m spacy download en_core_web_sm
+ENV VIRTUAL_ENV="/dependencies/.venv"
+ENV PATH="${VIRTUAL_ENV}/bin:${PATH}"
+WORKDIR /app
 
-CMD [ "poetry" "run" "python" "-m" "nlp_service" "0.0.0.0:8888" ]
+# RUN python -m spacy download ${SPACY_MODEL}
+
+COPY . .
+
+CMD ["python", "-m", "nlp_service", "0.0.0.0:50051"]
