@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.2](https://github.com/recap-utr/nlp-service/compare/v1.2.1...v1.2.2) (2023-01-16)
+
+
+### Bug Fixes
+
+* bump deps ([074733b](https://github.com/recap-utr/nlp-service/commit/074733b108a480dcd4bee0afc29df75c706f0ff2))
+* temporarily disable docker publish workflow ([394ff40](https://github.com/recap-utr/nlp-service/commit/394ff40f85eb7976e0c265c093e4e70a1cd8790b))
+
 ## [1.2.1](https://github.com/recap-utr/nlp-service/compare/v1.2.0...v1.2.1) (2023-01-11)
 
 
