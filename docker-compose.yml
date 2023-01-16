@@ -1,12 +1,22 @@
 version: "3"
 
 services:
-  nlp-service:
-    build: .
-    volumes:
-      - .:/app
+  cpu:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # volumes:
+    #   - .:/app
     ports:
-      - "${PORT}:8000"
+      - "50051:50051"
+  cuda:
+    build:
+      context: .
+      dockerfile: Dockerfile.cuda
+    # volumes:
+    #   - .:/app
+    ports:
+      - "50051:50051"
     deploy:
       resources:
         reservations:
