@@ -44,8 +44,8 @@ poetry run python -m nlp_service "127.0.0.1:50051"
 
 ## General Usage
 
-Once the server is running, you are free to call any of the functions defined in the underlying [protobuf file](https://github.com/ReCAP-UTR/Schema/blob/main/proto/arg_services/nlp/v1/nlp.proto).
-The corresponding documentation is located in the same [GitHub project](https://github.com/ReCAP-UTR/Schema/blob/main/doc/README.md#arg_servicesnlpv1nlpproto).
+Once the server is running, you are free to call any of the functions defined in the underlying [protobuf file](https://github.com/recap-utr/arg-services/blob/main/arg_services/nlp/v1/nlp.proto).
+The corresponding documentation is located at the [Buf Schema Registry](https://buf.build/recap/arg-services/docs/main:arg_services.nlp.v1).
 _Please note:_ The examples here use the Python programming language, but are also directly applicable to any other language supported by gRPC.
 
 ```python
@@ -88,7 +88,7 @@ vectors = [np.array(entry.document.vector) for entry in response.vectors]
 ## Advanced Usage
 
 A central piece for all available function is the `NlpConfig` message, allowing you to create even complex embedding models easily.
-In addition to [its documentation](https://github.com/ReCAP-UTR/Schema/blob/main/doc/README.md#nlpconfig), we will in the following present some examples to demonstrate the possibilities you have.
+In addition to [its documentation](https://buf.build/recap/arg-services/docs/main:arg_services.nlp.v1), we will in the following present some examples to demonstrate the possibilities you have.
 
 ```python
 from arg_services.nlp.v1 import nlp_pb2
