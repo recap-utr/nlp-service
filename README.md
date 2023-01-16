@@ -22,7 +22,7 @@ For easier setup, we also provide a `Dockerfile` and a `docker-compose` specific
 ```sh
 docker-compose build cpu
 # Download your preferred spacy model
-docker-compose run --rm cpu python -m spacy download en_core_web_lg
+docker-compose run cpu python -m spacy download en_core_web_lg
 # Start the CPU-only container
 docker-compose up cpu
 ```
