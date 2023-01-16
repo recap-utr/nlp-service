@@ -17,7 +17,19 @@ We will discuss the client at the end of this README.
 We are using [poetry](https://python-poetry.org) to manage the dependencies.
 For easier setup, we also provide a `Dockerfile` and a `docker-compose` specification.
 
-### Poetry
+### Docker-Compose (recommended)
+
+```sh
+docker-compose build
+# Download your preferred spacy model
+docker-compose run --rm cpu python -m spacy download en_core_web_lg
+# Start the CPU-only container
+docker-compose up cpu
+```
+
+In case you have a **CUDA-enabled GPU**, you can replace `cpu` with `cuda` in the above commands and make full use of your card for advanced models like BERT.
+
+### Poetry (advanced)
 
 ```sh
 # The server dependencies are optional, thus they have to be installed explicitly.
@@ -27,18 +39,7 @@ poetry install --extras server
 poetry run python -m spacy download core_en_web_lg
 # To run the server, you need to specify the address it should listen on.
 # In this example, it should liston on port 5678 on localhost.
-poetry run python -m nlp_service "127.0.0.1:5678"
-```
-
-### Docker
-
-```sh
-# You have to specify the host and port that the docker service should use
-# We are creating a file called .env for this.
-# Please note that for localhost inside Docker, you need to use 0.0.0.0, otherwise you will not be able to connect.
-echo "PORT=5678" >> .env
-# Now we can start the service.
-docker-compose up
+poetry run python -m nlp_service "127.0.0.1:50051"
 ```
 
 ## General Usage
