@@ -19,6 +19,9 @@ For easier setup, we also provide a `Dockerfile` and a `docker-compose` specific
 
 ### Docker-Compose (recommended)
 
+You first need to pull this repository.
+Then execute the following in the project directory:
+
 ```sh
 docker-compose build cpu
 # Download your preferred spacy model
