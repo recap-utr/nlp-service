@@ -20,7 +20,7 @@ RUN curl -sSL https://install.python-poetry.org | python - \
     && poetry config virtualenvs.in-project true
 
 COPY poetry.lock* pyproject.toml ./
-RUN poetry install --no-interaction --no-ansi --extras server
+RUN poetry install --no-interaction --no-ansi --all-extras
 
 ENV VIRTUAL_ENV="/dependencies/.venv"
 ENV PATH="${VIRTUAL_ENV}/bin:${PATH}"
