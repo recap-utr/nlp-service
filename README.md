@@ -25,7 +25,7 @@ Then execute the following in the project directory:
 ```sh
 docker-compose build cpu
 # Download your preferred spacy model
-docker-compose run cpu python -m spacy download en_core_web_lg
+docker-compose run cpu "python -m spacy download en_core_web_lg"
 # Start the CPU-only container
 docker-compose up cpu
 ```
