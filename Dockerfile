@@ -20,7 +20,7 @@ RUN pip install "poetry==${POETRY_VERSION}" \
     && poetry config virtualenvs.in-project true
 
 COPY poetry.lock* pyproject.toml ./
-RUN poetry install --no-interaction --no-ansi --all-extras --no-root
+RUN poetry install --no-interaction --no-ansi --no-root
 
 ENV VIRTUAL_ENV=/app/.venv
 ENV PATH="${VIRTUAL_ENV}/bin:${PATH}"

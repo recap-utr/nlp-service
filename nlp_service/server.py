@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import itertools
+import logging
 import typing as t
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -10,19 +11,17 @@ import grpc
 import numpy as np
 import scipy.stats
 import spacy
-import torch
 import typer
 from arg_services.nlp.v1 import nlp_pb2, nlp_pb2_grpc
 from mashumaro.mixins.dict import DataClassDictMixin
-from sentence_transformers import SentenceTransformer
 from spacy.language import Language as SpacyLanguage
-from spacy.tokens import Doc, DocBin, Span, Token
+from spacy.tokens import Doc, DocBin
 from thinc.types import Floats1d as SpacyVector
-from torch.cuda import is_available as is_cuda_available
-from transformers import AutoModel, AutoTokenizer
 
 from nlp_service.similarity import SimilarityFactory as SimilarityFactory
 from nlp_service.types import ArrayLike, NumpyMatrix, NumpyVector
+
+log = logging.getLogger(__name__)
 
 # import tensorflow_hub as hub
 
@@ -43,7 +42,6 @@ spacy_components = (
     # tok2vec, transformer
 )
 custom_components = ("embeddings_factory", "similarity_factory")
-torch_device = "cuda" if is_cuda_available() else "cpu"
 
 # TODO: Extract spacy-specific code into its own file.
 # Benefit: We could refactor the code s.t. the spacy `nlp` object can be
@@ -70,69 +68,6 @@ class ModelBase(ABC):
     @abstractmethod
     def vector(self, text: str) -> SpacyVector:
         pass
-
-
-class TransformersModel(ModelBase):
-    def __init__(self, model: EmbeddingModel):
-        # Load model from HuggingFace Hub
-        try:
-            self.tokenizer = AutoTokenizer.from_pretrained(
-                model.model_name, use_fast=True
-            )
-        except Exception:
-            self.tokenizer = AutoTokenizer.from_pretrained(model.model_name)
-
-        self.model = AutoModel.from_pretrained(model.model_name).to(torch_device)
-
-    # Mean Pooling - Take attention mask into account for correct averaging
-    def mean_pooling(self, model_output, attention_mask) -> torch.Tensor:
-        # First element of model_output contains all token embeddings
-        token_embeddings = model_output[0]
-        input_mask_expanded = (
-            attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
-        )
-        return torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(
-            input_mask_expanded.sum(1), min=1e-9
-        )
-
-    def vector(self, text: str) -> SpacyVector:
-        # Tokenize sentences
-        encoded_input = self.tokenizer(
-            text, padding=True, truncation=True, return_tensors="pt"
-        )
-        encoded_input = encoded_input.to(torch_device)
-        # Compute token embeddings
-        with torch.no_grad():
-            model_output = self.model(**encoded_input)
-        # Perform pooling
-        sentence_embeddings = self.mean_pooling(
-            model_output, encoded_input["attention_mask"]
-        )
-        # Normalize embeddings; is this needed? Normilize? Logit?
-        # sentence_embeddings = F.normalize(sentence_embeddings, p=2, dim=1)
-        return sentence_embeddings[0].cpu().numpy()
-
-
-class SentenceTransformersModel(ModelBase):
-    def __init__(self, model: EmbeddingModel):
-        self.model = SentenceTransformer(model.model_name, device=torch_device)
-
-    def vector(self, text: str) -> SpacyVector:
-        embeddings = t.cast(
-            NumpyVector, self.model.encode([text], convert_to_numpy=True)
-        )
-
-        return embeddings[0]
-
-
-# class TensorflowHubModel(ModelBase):
-#     def __init__(self, model: EmbeddingModel):
-#         self.model = hub.load(model.model_name)
-
-#     def vector(self, text: str):
-#         embeddings = self.model([text])  # type: ignore
-
-#         return embeddings[0].numpy()
 
 
 def pmean(vectors: ArrayLike, p: float) -> SpacyVector:
@@ -167,6 +102,99 @@ class SpacyModel(ModelBase):
         return doc.vector
 
 
+embedding_map: t.Dict[
+    nlp_pb2.EmbeddingType.ValueType, t.Callable[[EmbeddingModel], ModelBase]
+] = {
+    nlp_pb2.EmbeddingType.EMBEDDING_TYPE_SPACY: SpacyModel,
+}
+
+
+try:
+    import torch
+    from torch.cuda import is_available as is_cuda_available
+    from transformers import AutoModel, AutoTokenizer
+
+    torch_device = "cuda" if is_cuda_available() else "cpu"
+
+    class TransformersModel(ModelBase):
+        def __init__(self, model: EmbeddingModel):
+            # Load model from HuggingFace Hub
+            try:
+                self.tokenizer = AutoTokenizer.from_pretrained(
+                    model.model_name, use_fast=True
+                )
+            except Exception:
+                self.tokenizer = AutoTokenizer.from_pretrained(model.model_name)
+
+            self.model = AutoModel.from_pretrained(model.model_name).to(torch_device)
+
+        # Mean Pooling - Take attention mask into account for correct averaging
+        def mean_pooling(self, model_output, attention_mask) -> torch.Tensor:
+            # First element of model_output contains all token embeddings
+            token_embeddings = model_output[0]
+            input_mask_expanded = (
+                attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
+            )
+            return torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(
+                input_mask_expanded.sum(1), min=1e-9
+            )
+
+        def vector(self, text: str) -> SpacyVector:
+            # Tokenize sentences
+            encoded_input = self.tokenizer(
+                text, padding=True, truncation=True, return_tensors="pt"
+            )
+            encoded_input = encoded_input.to(torch_device)
+            # Compute token embeddings
+            with torch.no_grad():
+                model_output = self.model(**encoded_input)
+            # Perform pooling
+            sentence_embeddings = self.mean_pooling(
+                model_output, encoded_input["attention_mask"]
+            )
+            # Normalize embeddings; is this needed? Normilize? Logit?
+            # sentence_embeddings = F.normalize(sentence_embeddings, p=2, dim=1)
+            return sentence_embeddings[0].cpu().numpy()
+
+    embedding_map[nlp_pb2.EmbeddingType.EMBEDDING_TYPE_TRANSFORMERS] = TransformersModel
+
+except ModuleNotFoundError:
+    log.info("'transformers' not installed.")
+
+
+try:
+    from sentence_transformers import SentenceTransformer
+    from torch.cuda import is_available as is_cuda_available
+
+    class SentenceTransformersModel(ModelBase):
+        def __init__(self, model: EmbeddingModel):
+            self.model = SentenceTransformer(model.model_name, device=torch_device)
+
+        def vector(self, text: str) -> SpacyVector:
+            embeddings = t.cast(
+                NumpyVector, self.model.encode([text], convert_to_numpy=True)
+            )
+
+            return embeddings[0]
+
+    embedding_map[
+        nlp_pb2.EmbeddingType.EMBEDDING_TYPE_SENTENCE_TRANSFORMERS
+    ] = SentenceTransformersModel
+
+except ModuleNotFoundError:
+    log.info("'sentence_transformers' not installed.")
+
+
+# class TensorflowHubModel(ModelBase):
+#     def __init__(self, model: EmbeddingModel):
+#         self.model = hub.load(model.model_name)
+
+#     def vector(self, text: str):
+#         embeddings = self.model([text])  # type: ignore
+
+#         return embeddings[0].numpy()
+
+
 @SpacyLanguage.factory("embeddings_factory")
 class EmbeddingsFactory:
     def __init__(self, nlp, name, models):
@@ -174,9 +202,15 @@ class EmbeddingsFactory:
 
         for model_dict in models:
             model = EmbeddingModel.from_dict(model_dict)
+            model_class = embedding_map.get(model.model_type)
+
+            if model_class is None:
+                raise ValueError(
+                    f"The packages required for '{nlp_pb2.EmbeddingType.Name(model.model_type)}' are not installed"
+                )
 
             if model not in model_cache:
-                model_cache[model] = embedding_map[model.model_type](model)
+                model_cache[model] = model_class(model)
 
             self.models.append(model_cache[model])
 
@@ -248,13 +282,6 @@ pool_map: t.Dict[int, t.Callable[[NumpyMatrix], NumpyVector]] = {
     nlp_pb2.Pooling.POOLING_MEDIAN: lambda x: np.median(x, axis=0),
     nlp_pb2.Pooling.POOLING_GMEAN: lambda x: scipy.stats.gmean(x, axis=0),
     nlp_pb2.Pooling.POOLING_HMEAN: lambda x: scipy.stats.hmean(x, axis=0),
-}
-
-embedding_map: t.Dict[int, t.Callable[[EmbeddingModel], ModelBase]] = {
-    nlp_pb2.EmbeddingType.EMBEDDING_TYPE_SPACY: SpacyModel,
-    nlp_pb2.EmbeddingType.EMBEDDING_TYPE_SENTENCE_TRANSFORMERS: SentenceTransformersModel,
-    # nlp_pb2.EmbeddingType.EMBEDDING_TYPE_TENSORFLOW_HUB: TensorflowHubModel,
-    nlp_pb2.EmbeddingType.EMBEDDING_TYPE_TRANSFORMERS: TransformersModel,
 }
 
 
@@ -406,7 +433,7 @@ def add_services(server: grpc.Server):
 
 
 @app.command()
-def main(address: str):
+def main(address: str = "127.0.0.1:50051"):
     """Main entry point for the server."""
 
     arg_services.serve(

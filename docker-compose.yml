@@ -5,16 +5,12 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    # volumes:
-    #   - .:/app
     ports:
       - "50051:50051"
   cuda:
     build:
       context: .
       dockerfile: Dockerfile.cuda
-    # volumes:
-    #   - .:/app
     ports:
       - "50051:50051"
     deploy:

@@ -19,32 +19,30 @@ scipy = "^1.10.0"
 spacy = "^3.4.4"
 arg-services = "^1.0.8"
 nltk = "^3.8.1"
+nptyping = "^2.4.1"
+mashumaro = "^3.3.1"
+typer = "^0.7.0"
 gensim = { version = "^4.3.0", optional = true }
-pyemd = { version = "^0.5.1", optional = true }
 python-Levenshtein = { version = "^0.20.9", optional = true }
 sentence-transformers = { version = "^2.2.2", optional = true }
+torch = { version = "^1.13.1", optional = true }
+transformers = { version = "^4.25.1", optional = true }
 # tensorflow = { version = "^2.11.0", optional = true }
 # tensorflow-hub = { version = "^0.12.0", optional = true }
-torch = { version = "^1.13.1", optional = true }
-typer = { version = "^0.7.0", optional = true }
-nptyping = "^2.4.1"
-transformers = { version = "^4.25.1", optional = true }
-mashumaro = "^3.3.1"
+
+[tool.poetry.extras]
+wmd = ["gensim"]
+levenshtein = ["python-Levenshtein"]
+sentence-transformers = ["sentence-transformers", "torch"]
+transformers = ["transformers", "torch"]
+all = [
+    "gensim",
+    "python-Levenshtein",
+    "sentence-transformers",
+    "transformers",
+    "torch",
+]
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
-
-[tool.poetry.extras]
-wmd = ["gensim"]
-server = [
-    "gensim",
-    "pyemd",
-    "python-levenshtein",
-    "sentence-transformers",
-    # "tensorflow-hub",
-    # "tensorflow",
-    "torch",
-    "typer",
-    "transformers",
-]
