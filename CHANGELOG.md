@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.3.1](https://github.com/recap-utr/nlp-service/compare/v1.3.0...v1.3.1) (2023-02-03)
+
+
+### Bug Fixes
+
+* **docker:** add entrypoint and extras build arg ([2ad2877](https://github.com/recap-utr/nlp-service/commit/2ad287760763f90f6845f16c52254865bd81e16f))
+* **server:** address should be a cli argument ([3c74b56](https://github.com/recap-utr/nlp-service/commit/3c74b5688a7f98695186df012c3140601dcd591f))
+* **server:** download spacy model if not available ([defb340](https://github.com/recap-utr/nlp-service/commit/defb3405d8de14e79a412c106ff15ffa371c1a6a))
+
 ## [1.3.0](https://github.com/recap-utr/nlp-service/compare/v1.2.2...v1.3.0) (2023-02-03)
 
 
