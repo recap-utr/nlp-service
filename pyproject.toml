@@ -6,7 +6,7 @@ authors = ["Mirko Lenz <info@mirko-lenz.de>"]
 license = "Apache-2.0"
 readme = "README.md"
 homepage = "http://recap.uni-trier.de"
-repository = "https://github.com/ReCAP-UTR/NLP"
+repository = "https://github.com/recap-utr/nlp-service"
 packages = [{ include = "nlp_service" }]
 
 [tool.poetry.scripts]
