@@ -433,7 +433,7 @@ def add_services(server: grpc.Server):
 
 
 @app.command()
-def main(address: str = "127.0.0.1:50051"):
+def main(address: str = typer.Argument("127.0.0.1:50051")):
     """Main entry point for the server."""
 
     arg_services.serve(
