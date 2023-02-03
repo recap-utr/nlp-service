@@ -2,6 +2,7 @@ ARG PYTHON_VERSION=3.9
 
 FROM python:${PYTHON_VERSION}-slim
 
+ARG EXTRAS=""
 ARG POETRY_VERSION=1.3.1
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
@@ -20,11 +21,12 @@ RUN pip install "poetry==${POETRY_VERSION}" \
     && poetry config virtualenvs.in-project true
 
 COPY poetry.lock* pyproject.toml ./
-RUN poetry install --no-interaction --no-ansi --no-root
+RUN poetry install --no-interaction --no-ansi --no-root --extras "${EXTRAS}"
 
 ENV VIRTUAL_ENV=/app/.venv
 ENV PATH="${VIRTUAL_ENV}/bin:${PATH}"
 
 COPY . ./
 
-CMD ["python", "-m", "nlp_service", "0.0.0.0:50051"]
+ENTRYPOINT [ "python", "-m", "nlp_service" ]
+CMD [ "0.0.0.0:50051" ]
