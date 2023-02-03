@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/recap-utr/nlp-service/compare/v1.2.2...v1.3.0) (2023-02-03)
+
+
+### Features
+
+* make transformer dependencies optional ([c34f62f](https://github.com/recap-utr/nlp-service/commit/c34f62f54110a3204de94081a1a717824a73a133))
+
 ## [1.2.2](https://github.com/recap-utr/nlp-service/compare/v1.2.1...v1.2.2) (2023-01-16)
 
 
