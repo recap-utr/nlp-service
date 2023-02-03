@@ -8,8 +8,7 @@
       "name": "NLP Server",
       "type": "python",
       "request": "launch",
-      "module": "nlp_service",
-      "args": ["127.0.0.1:5678"]
+      "module": "nlp_service"
     }
   ]
 }
