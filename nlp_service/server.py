@@ -14,6 +14,7 @@ import spacy
 import typer
 from arg_services.nlp.v1 import nlp_pb2, nlp_pb2_grpc
 from mashumaro.mixins.dict import DataClassDictMixin
+from spacy.cli import download as spacy_download
 from spacy.language import Language as SpacyLanguage
 from spacy.tokens import Doc, DocBin
 from thinc.types import Floats1d as SpacyVector
@@ -233,6 +234,17 @@ spacy_cache: dict[SpacyKey, SpacyCache] = {}
 model_cache: dict[EmbeddingModel, ModelBase] = {}
 
 
+def _load_spacy_model(name: t.Optional[str]) -> SpacyLanguage:
+    if name is None:
+        return spacy.blank("en")
+
+    try:
+        return spacy.load(name)
+    except OSError:
+        spacy_download(name)
+        return spacy.load(name)
+
+
 def _load_spacy(config: nlp_pb2.NlpConfig) -> SpacyCache:
     models = tuple(
         EmbeddingModel.from_protobuf(model) for model in config.embedding_models
@@ -244,11 +256,7 @@ def _load_spacy(config: nlp_pb2.NlpConfig) -> SpacyCache:
     )
 
     if key not in spacy_cache:
-        nlp = (
-            spacy.load(config.spacy_model)
-            if config.spacy_model
-            else spacy.blank(config.language)
-        )
+        nlp = _load_spacy_model(config.spacy_model)
 
         if models:
             nlp.add_pipe(
