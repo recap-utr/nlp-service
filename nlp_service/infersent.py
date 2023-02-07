@@ -269,7 +269,6 @@ class InferSent(nn.Module):
         return embeddings
 
     def visualize(self, sent, tokenize=True):
-
         sent = sent.split() if not tokenize else self.tokenize(sent)
         sent = [
             [self.bos] + [word for word in sent if word in self.word_vec] + [self.eos]
