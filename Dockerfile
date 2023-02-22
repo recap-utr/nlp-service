@@ -29,4 +29,4 @@ ENV PATH="${VIRTUAL_ENV}/bin:${PATH}"
 COPY . ./
 
 ENTRYPOINT [ "python", "-m", "nlp_service" ]
-CMD [ "0.0.0.0:50051" ]
+CMD [ "0.0.0.0:50100" ]

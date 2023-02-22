@@ -178,9 +178,9 @@ try:
 
             return embeddings[0]
 
-    embedding_map[
-        nlp_pb2.EmbeddingType.EMBEDDING_TYPE_SENTENCE_TRANSFORMERS
-    ] = SentenceTransformersModel
+    embedding_map[nlp_pb2.EmbeddingType.EMBEDDING_TYPE_SENTENCE_TRANSFORMERS] = (
+        SentenceTransformersModel
+    )
 
 except ModuleNotFoundError:
     log.info("'sentence_transformers' not installed.")
@@ -207,7 +207,9 @@ class EmbeddingsFactory:
 
             if model_class is None:
                 raise ValueError(
-                    f"The packages required for '{nlp_pb2.EmbeddingType.Name(model.model_type)}' are not installed"
+                    "The packages required for"
+                    f" '{nlp_pb2.EmbeddingType.Name(model.model_type)}' are not"
+                    " installed"
                 )
 
             if model not in model_cache:
@@ -441,7 +443,7 @@ def add_services(server: grpc.Server):
 
 
 @app.command()
-def main(address: str = typer.Argument("127.0.0.1:50051")):
+def main(address: str = typer.Argument("127.0.0.1:50100")):
     """Main entry point for the server."""
 
     arg_services.serve(

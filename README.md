@@ -42,7 +42,7 @@ poetry install --extras server
 poetry run python -m spacy download core_en_web_lg
 # To run the server, you need to specify the address it should listen on.
 # In this example, it should liston on port 5678 on localhost.
-poetry run python -m nlp_service "127.0.0.1:50051"
+poetry run python -m nlp_service "127.0.0.1:50100"
 ```
 
 ## General Usage

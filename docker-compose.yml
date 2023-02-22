@@ -6,13 +6,13 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "50051:50051"
+      - "50100:50100"
   cuda:
     build:
       context: .
       dockerfile: Dockerfile.cuda
     ports:
-      - "50051:50051"
+      - "50100:50100"
     deploy:
       resources:
         reservations:
