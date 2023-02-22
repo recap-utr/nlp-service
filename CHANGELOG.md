@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.2](https://github.com/recap-utr/nlp-service/compare/v1.3.1...v1.3.2) (2023-02-22)
+
+
+### Bug Fixes
+
+* update default port ([09b6a3c](https://github.com/recap-utr/nlp-service/commit/09b6a3c4c40b262208bea6bbbab452711ffc7ac7))
+
 ## [1.3.1](https://github.com/recap-utr/nlp-service/compare/v1.3.0...v1.3.1) (2023-02-03)
 
 
