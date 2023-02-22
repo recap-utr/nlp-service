@@ -367,7 +367,7 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
 
         if new_texts := [text for text in req.texts if text not in doc_cache]:
             with nlp.select_pipes(enable=custom_components):
-                doc_cache.update(dict(zip(new_texts, nlp.pipe(new_texts))))
+                doc_cache.update(zip(new_texts, nlp.pipe(new_texts)))
 
         for text in req.texts:
             doc = doc_cache[text]
@@ -421,7 +421,7 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
 
         if new_texts := [text for text in texts if text not in doc_cache]:
             with nlp.select_pipes(enable=custom_components):
-                doc_cache.update(dict(zip(new_texts, nlp.pipe(new_texts))))
+                doc_cache.update(zip(new_texts, nlp.pipe(new_texts)))
 
         res.similarities.extend(
             doc_cache[x.text1].similarity(doc_cache[x.text2]) for x in req.text_tuples
