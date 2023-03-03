@@ -10,7 +10,7 @@ from scipy.spatial import distance as scipy_dist
 from spacy.language import Language as SpacyLanguage
 from spacy.tokens import Token
 
-from nlp_service.types import NumpyMatrix, NumpyVector, SpacyObj, SpacyVector
+from nlp_service.typing import NumpyMatrix, NumpyVector, SpacyObj, SpacyVector
 
 
 # https://github.com/babylonhealth/fuzzymax/blob/master/similarity/fuzzy.py
@@ -287,5 +287,5 @@ try:
     spacy_mapping[nlp_pb2.SimilarityMethod.SIMILARITY_METHOD_WMD] = _wmd
 
 
-except ImportError as e:
+except ImportError:
     pass

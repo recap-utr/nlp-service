@@ -14,13 +14,13 @@ import spacy
 import typer
 from arg_services.nlp.v1 import nlp_pb2, nlp_pb2_grpc
 from mashumaro.mixins.dict import DataClassDictMixin
-from spacy.cli import download as spacy_download
+from spacy.cli.download import download as spacy_download
 from spacy.language import Language as SpacyLanguage
 from spacy.tokens import Doc, DocBin
 from thinc.types import Floats1d as SpacyVector
 
 from nlp_service.similarity import SimilarityFactory as SimilarityFactory
-from nlp_service.types import ArrayLike, NumpyMatrix, NumpyVector
+from nlp_service.typing import ArrayLike, NumpyMatrix, NumpyVector
 
 log = logging.getLogger(__name__)
 

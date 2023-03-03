@@ -9,7 +9,7 @@ from spacy.language import Language as SpacyLanguage
 from spacy.tokens import Doc, DocBin, Span, Token
 
 from nlp_service.similarity import SimilarityFactory as SimilarityFactory
-from nlp_service.types import ArrayLike, NumpyVector
+from nlp_service.typing import ArrayLike, NumpyVector
 
 Doc.set_extension("vector", default=None)
 Span.set_extension("vector", default=None)
@@ -69,7 +69,8 @@ def inject_pipes(
 
 @SpacyLanguage.component("remote_vector")
 def remote_vector(doc):
-    func = lambda x: x._.vector
+    def func(x):
+        return x._.vector
 
     doc.user_hooks["vector"] = func
     doc.user_span_hooks["vector"] = func
