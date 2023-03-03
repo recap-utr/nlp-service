@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.3](https://github.com/recap-utr/nlp-service/compare/v1.3.2...v1.3.3) (2023-03-03)
+
+
+### Bug Fixes
+
+* bump deps ([a2cb819](https://github.com/recap-utr/nlp-service/commit/a2cb81929ef67d68a3f45655b17db5cc33ae5856))
+
 ## [1.3.2](https://github.com/recap-utr/nlp-service/compare/v1.3.1...v1.3.2) (2023-02-22)
 
 
