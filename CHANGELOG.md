@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.5](https://github.com/recap-utr/nlp-service/compare/v1.3.4...v1.3.5) (2023-03-06)
+
+
+### Bug Fixes
+
+* use cosine for unspecified similarity ([8619293](https://github.com/recap-utr/nlp-service/commit/861929344bae2bc865f4efa48d5edb2072c07d6b))
+
 ## [1.3.4](https://github.com/recap-utr/nlp-service/compare/v1.3.3...v1.3.4) (2023-03-06)
 
 
