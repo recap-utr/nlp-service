@@ -207,7 +207,8 @@ def dist2sim(distance: float) -> float:
     return 1 / (1 + distance)
 
 
-mapping: dict[str, t.Callable[[t.Any, t.Any], float]] = {
+mapping: dict[t.Optional[str], t.Callable[[t.Any, t.Any], float]] = {
+    None: cosine,
     "cosine": cosine,
     "angular": angular,
     "dynamax_jaccard": dynamax_jaccard,
@@ -221,6 +222,7 @@ mapping: dict[str, t.Callable[[t.Any, t.Any], float]] = {
 proto_mapping: dict[
     nlp_pb2.SimilarityMethod.ValueType, t.Callable[[t.Any, t.Any], float]
 ] = {
+    nlp_pb2.SIMILARITY_METHOD_UNSPECIFIED: cosine,
     nlp_pb2.SIMILARITY_METHOD_COSINE: cosine,
     nlp_pb2.SIMILARITY_METHOD_ANGULAR: angular,
     nlp_pb2.SIMILARITY_METHOD_DYNAMAX_JACCARD: dynamax_jaccard,
@@ -234,6 +236,7 @@ proto_mapping: dict[
 spacy_mapping: dict[
     nlp_pb2.SimilarityMethod.ValueType, t.Callable[[t.Any, t.Any], float]
 ] = {
+    nlp_pb2.SIMILARITY_METHOD_UNSPECIFIED: _cosine,
     nlp_pb2.SIMILARITY_METHOD_COSINE: _cosine,
     nlp_pb2.SIMILARITY_METHOD_ANGULAR: _angular,
     nlp_pb2.SIMILARITY_METHOD_DYNAMAX_JACCARD: _dynamax_jaccard,
