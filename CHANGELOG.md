@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.4](https://github.com/recap-utr/nlp-service/compare/v1.3.3...v1.3.4) (2023-03-06)
+
+
+### Bug Fixes
+
+* loosen numpy/scipy version constraints ([f860095](https://github.com/recap-utr/nlp-service/commit/f860095e6a11f0a4da5f2b5e48d3be8538457bbc))
+
 ## [1.3.3](https://github.com/recap-utr/nlp-service/compare/v1.3.2...v1.3.3) (2023-03-03)
 
 
