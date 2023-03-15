@@ -2,14 +2,14 @@
 
 [[package]]
 name = "arg-services"
-version = "1.2.1"
+version = "1.2.3"
 description = "gRPC definitions for microservice-based argumentation machines"
 category = "main"
 optional = false
 python-versions = ">=3.9,<4.0"
 files = [
-    {file = "arg_services-1.2.1-py3-none-any.whl", hash = "sha256:70157112f0462091cc2b322c161d5f99417ff693590142efd57792fed1f87c6b"},
-    {file = "arg_services-1.2.1.tar.gz", hash = "sha256:732c1fd1124f6fc126eb338d2609fca5d038bd72d06c2be2983efa263e43881d"},
+    {file = "arg_services-1.2.3-py3-none-any.whl", hash = "sha256:e090f9c0f5f952c056d97965ccdf592ae0eec89c0960ace3b39451190e4c85c3"},
+    {file = "arg_services-1.2.3.tar.gz", hash = "sha256:24af4e4704d1351ece9aa6f3f299af5baf68abe5e8b6b3e0c7dd7e2d5916e96e"},
 ]
 
 [package.dependencies]
