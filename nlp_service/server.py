@@ -178,9 +178,9 @@ try:
 
             return embeddings[0]
 
-    embedding_map[nlp_pb2.EmbeddingType.EMBEDDING_TYPE_SENTENCE_TRANSFORMERS] = (
-        SentenceTransformersModel
-    )
+    embedding_map[
+        nlp_pb2.EmbeddingType.EMBEDDING_TYPE_SENTENCE_TRANSFORMERS
+    ] = SentenceTransformersModel
 
 except ModuleNotFoundError:
     log.info("'sentence_transformers' not installed.")
