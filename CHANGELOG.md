@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.7](https://github.com/recap-utr/nlp-service/compare/v1.3.6...v1.3.7) (2023-03-18)
+
+
+### Bug Fixes
+
+* **deps:** update dependency gensim to v4.3.1 ([#15](https://github.com/recap-utr/nlp-service/issues/15)) ([a7e7476](https://github.com/recap-utr/nlp-service/commit/a7e7476212ecb4878963a8dddc3122e92baff2e7))
+
 ## [1.3.6](https://github.com/recap-utr/nlp-service/compare/v1.3.5...v1.3.6) (2023-03-18)
 
 
