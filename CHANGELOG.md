@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.6](https://github.com/recap-utr/nlp-service/compare/v1.3.5...v1.3.6) (2023-03-18)
+
+
+### Bug Fixes
+
+* **deps:** update dependency arg-services to v1.2.3 ([#14](https://github.com/recap-utr/nlp-service/issues/14)) ([597f498](https://github.com/recap-utr/nlp-service/commit/597f4988d2560fb35130c741f37601dec3d36612))
+
 ## [1.3.5](https://github.com/recap-utr/nlp-service/compare/v1.3.4...v1.3.5) (2023-03-06)
 
 
