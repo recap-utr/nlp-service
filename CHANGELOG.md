@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.9](https://github.com/recap-utr/nlp-service/compare/v1.3.8...v1.3.9) (2023-03-19)
+
+
+### Bug Fixes
+
+* allow pytorch v2 ([5fa6b5a](https://github.com/recap-utr/nlp-service/commit/5fa6b5a7b41516eb8e0c0c50c2c97e44953b5c3d))
+
 ## [1.3.8](https://github.com/recap-utr/nlp-service/compare/v1.3.7...v1.3.8) (2023-03-19)
 
 
