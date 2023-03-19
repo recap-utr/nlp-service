@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.8](https://github.com/recap-utr/nlp-service/compare/v1.3.7...v1.3.8) (2023-03-19)
+
+
+### Bug Fixes
+
+* **deps:** update dependency spacy to v3.5.1 ([#16](https://github.com/recap-utr/nlp-service/issues/16)) ([6a3f9d5](https://github.com/recap-utr/nlp-service/commit/6a3f9d534395a850877e9baec56a98bbd1318436))
+* **deps:** update dependency transformers to v4.27.1 ([#17](https://github.com/recap-utr/nlp-service/issues/17)) ([fd3782b](https://github.com/recap-utr/nlp-service/commit/fd3782bb1fcd420346f233cf3f4bf03c2a9a0fc6))
+
 ## [1.3.7](https://github.com/recap-utr/nlp-service/compare/v1.3.6...v1.3.7) (2023-03-18)
 
 
