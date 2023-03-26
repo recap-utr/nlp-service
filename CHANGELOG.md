@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.11](https://github.com/recap-utr/nlp-service/compare/v1.3.10...v1.3.11) (2023-03-26)
+
+
+### Bug Fixes
+
+* re-enable tensorflow-hub embeddings ([188108f](https://github.com/recap-utr/nlp-service/commit/188108fdf0b862735bfc0e49dbe3e4e825c49d2c))
+
 ## [1.3.10](https://github.com/recap-utr/nlp-service/compare/v1.3.9...v1.3.10) (2023-03-20)
 
 
