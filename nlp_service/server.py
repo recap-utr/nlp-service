@@ -24,8 +24,6 @@ from nlp_service.typing import ArrayLike, NumpyMatrix, NumpyVector
 
 log = logging.getLogger(__name__)
 
-# import tensorflow_hub as hub
-
 # https://spacy.io/usage/processing-pipelines#built-in
 spacy_components = (
     "tagger",
@@ -178,22 +176,32 @@ try:
 
             return embeddings[0]
 
-    embedding_map[
-        nlp_pb2.EmbeddingType.EMBEDDING_TYPE_SENTENCE_TRANSFORMERS
-    ] = SentenceTransformersModel
+    embedding_map[nlp_pb2.EmbeddingType.EMBEDDING_TYPE_SENTENCE_TRANSFORMERS] = (
+        SentenceTransformersModel
+    )
 
 except ModuleNotFoundError:
-    log.info("'sentence_transformers' not installed.")
+    log.info("'sentence-transformers' not installed.")
 
 
-# class TensorflowHubModel(ModelBase):
-#     def __init__(self, model: EmbeddingModel):
-#         self.model = hub.load(model.model_name)
+try:
+    import tensorflow_hub as hub
 
-#     def vector(self, text: str):
-#         embeddings = self.model([text])  # type: ignore
+    class TensorflowHubModel(ModelBase):
+        def __init__(self, model: EmbeddingModel):
+            self.model: t.Any = hub.load(model.model_name)
 
-#         return embeddings[0].numpy()
+        def vector(self, text: str) -> SpacyVector:
+            embeddings: t.Sequence[t.Any] = self.model([text])
+
+            return embeddings[0].numpy()
+
+    embedding_map[nlp_pb2.EmbeddingType.EMBEDDING_TYPE_TENSORFLOW_HUB] = (
+        TensorflowHubModel
+    )
+
+except ModuleNotFoundError:
+    log.info("'tensorflow-hub' not installed.")
 
 
 @SpacyLanguage.factory("embeddings_factory")
