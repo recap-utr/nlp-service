@@ -176,9 +176,9 @@ try:
 
             return embeddings[0]
 
-    embedding_map[
-        nlp_pb2.EmbeddingType.EMBEDDING_TYPE_SENTENCE_TRANSFORMERS
-    ] = SentenceTransformersModel
+    embedding_map[nlp_pb2.EmbeddingType.EMBEDDING_TYPE_SENTENCE_TRANSFORMERS] = (
+        SentenceTransformersModel
+    )
 
 except ModuleNotFoundError:
     log.info("'sentence-transformers' not installed.")
@@ -196,9 +196,9 @@ try:
 
             return embeddings[0].numpy()
 
-    embedding_map[
-        nlp_pb2.EmbeddingType.EMBEDDING_TYPE_TENSORFLOW_HUB
-    ] = TensorflowHubModel
+    embedding_map[nlp_pb2.EmbeddingType.EMBEDDING_TYPE_TENSORFLOW_HUB] = (
+        TensorflowHubModel
+    )
 
 except ModuleNotFoundError:
     log.info("'tensorflow-hub' not installed.")
@@ -245,7 +245,7 @@ model_cache: dict[EmbeddingModel, ModelBase] = {}
 
 
 def _load_spacy_model(name: t.Optional[str]) -> SpacyLanguage:
-    if name is None:
+    if not name:
         return spacy.blank("en")
 
     try:
