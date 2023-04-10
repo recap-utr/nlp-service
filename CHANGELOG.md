@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.4.0](https://github.com/recap-utr/nlp-service/compare/v1.3.11...v1.4.0) (2023-04-10)
+
+
+### Features
+
+* add support for openai embeddings ([3779c7d](https://github.com/recap-utr/nlp-service/commit/3779c7dbebd798d10cefe5b5cff6fd6fd68eec50))
+
+
+### Bug Fixes
+
+* did not check properly for empty spacy model ([770e4d9](https://github.com/recap-utr/nlp-service/commit/770e4d91112bd6dbf19b28a488c0c07d34d046db))
+
 ## [1.3.11](https://github.com/recap-utr/nlp-service/compare/v1.3.10...v1.3.11) (2023-03-26)
 
 
