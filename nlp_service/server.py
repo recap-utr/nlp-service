@@ -204,6 +204,26 @@ except ModuleNotFoundError:
     log.info("'tensorflow-hub' not installed.")
 
 
+try:
+    import openai
+
+    openai.api_key_path = "./openai_api_key.txt"
+
+    class OpenaiModel(ModelBase):
+        def __init__(self, model: EmbeddingModel):
+            self.model_name: str = model.model_name
+
+        def vector(self, text: str) -> SpacyVector:
+            res: t.Any = openai.Embedding.create(input=[text], model=self.model_name)
+
+            return t.cast(SpacyVector, np.array(res["data"][0]["embedding"]))
+
+    embedding_map[nlp_pb2.EmbeddingType.EMBEDDING_TYPE_OPENAI] = OpenaiModel
+
+except ModuleNotFoundError:
+    log.info("'openai' not installed.")
+
+
 @SpacyLanguage.factory("embeddings_factory")
 class EmbeddingsFactory:
     def __init__(self, nlp, name, models):
