@@ -138,14 +138,14 @@ frozenlist = ">=1.1.0"
 
 [[package]]
 name = "arg-services"
-version = "1.3.0"
+version = "1.3.1"
 description = "gRPC definitions for microservice-based argumentation machines"
 category = "main"
 optional = false
 python-versions = ">=3.9,<4.0"
 files = [
-    {file = "arg_services-1.3.0-py3-none-any.whl", hash = "sha256:8e8e65a9e1e3027173a3692f51ac6cdd87e511ed2cdcdde303ca17e48ec8cfef"},
-    {file = "arg_services-1.3.0.tar.gz", hash = "sha256:7c4535ff47fb484de1652ca10693a7f3a5af3becc833438d9ebfedbb99f5cdda"},
+    {file = "arg_services-1.3.1-py3-none-any.whl", hash = "sha256:a7a70917b7c9241f30bedc874aa56dcf6f95398c603e3d4c833555a4fba4386e"},
+    {file = "arg_services-1.3.1.tar.gz", hash = "sha256:9d7048a969611dbe911353bb9fb0e6734f3ed9b6df40feb05864d9742bf2379d"},
 ]
 
 [package.dependencies]
