@@ -223,3 +223,10 @@ $RECYCLE.BIN/
 
 data/
 openai_api_key.txt
+
+# nix
+.envrc
+.direnv/
+.devenv/
+/result
+.venv
