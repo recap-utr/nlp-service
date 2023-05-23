@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.1](https://github.com/recap-utr/nlp-service/compare/v1.4.0...v1.4.1) (2023-05-23)
+
+
+### Bug Fixes
+
+* bump deps and relax typer constraints ([90193af](https://github.com/recap-utr/nlp-service/commit/90193af6b6d5ac1a0684032190a06107ffda3816))
+
 ## [1.4.0](https://github.com/recap-utr/nlp-service/compare/v1.3.11...v1.4.0) (2023-04-10)
 
 
