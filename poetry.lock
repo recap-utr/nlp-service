@@ -3247,4 +3247,4 @@ wmd = ["gensim"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10, <3.12"
-content-hash = "7417ea35c5c97c73f382da14089465527ae7f12089bfd62fd55d0071a1ed8541"
+content-hash = "7f0600457d421e048665a39ea976f578609c52c8ebed224ca9c3dade7bfdbfdd"
