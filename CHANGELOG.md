@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.2](https://github.com/recap-utr/nlp-service/compare/v1.4.1...v1.4.2) (2023-06-07)
+
+
+### Bug Fixes
+
+* allow specifying threads ([f67af0c](https://github.com/recap-utr/nlp-service/commit/f67af0c55e09f261bafad6161a97574ab1afbd34))
+
 ## [1.4.1](https://github.com/recap-utr/nlp-service/compare/v1.4.0...v1.4.1) (2023-05-23)
 
 
