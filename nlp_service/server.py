@@ -176,9 +176,9 @@ try:
 
             return embeddings[0]
 
-    embedding_map[
-        nlp_pb2.EmbeddingType.EMBEDDING_TYPE_SENTENCE_TRANSFORMERS
-    ] = SentenceTransformersModel
+    embedding_map[nlp_pb2.EmbeddingType.EMBEDDING_TYPE_SENTENCE_TRANSFORMERS] = (
+        SentenceTransformersModel
+    )
 
 except ModuleNotFoundError:
     log.info("'sentence-transformers' not installed.")
@@ -196,9 +196,9 @@ try:
 
             return embeddings[0].numpy()
 
-    embedding_map[
-        nlp_pb2.EmbeddingType.EMBEDDING_TYPE_TENSORFLOW_HUB
-    ] = TensorflowHubModel
+    embedding_map[nlp_pb2.EmbeddingType.EMBEDDING_TYPE_TENSORFLOW_HUB] = (
+        TensorflowHubModel
+    )
 
 except ModuleNotFoundError:
     log.info("'tensorflow-hub' not installed.")
@@ -471,13 +471,14 @@ def add_services(server: grpc.Server):
 
 
 @app.command()
-def main(address: str = typer.Argument("127.0.0.1:50100")):
+def main(address: str = typer.Argument("127.0.0.1:50100"), threads: int = 1):
     """Main entry point for the server."""
 
     arg_services.serve(
         address,
         add_services,
         [arg_services.full_service_name(nlp_pb2, "NlpService")],
+        threads,
     )
 
 
