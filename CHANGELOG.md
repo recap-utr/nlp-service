@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.3](https://github.com/recap-utr/nlp-service/compare/v1.4.2...v1.4.3) (2023-06-07)
+
+
+### Bug Fixes
+
+* update deps to remove yanked grpcio release ([4b1f277](https://github.com/recap-utr/nlp-service/commit/4b1f2773953f812925de57b181cfb58f7e25d7f7))
+
 ## [1.4.2](https://github.com/recap-utr/nlp-service/compare/v1.4.1...v1.4.2) (2023-06-07)
 
 
