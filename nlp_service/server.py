@@ -24,6 +24,17 @@ from nlp_service.typing import ArrayLike, NumpyMatrix, NumpyVector
 
 log = logging.getLogger(__name__)
 
+
+torch_device = "cpu"
+
+try:
+    from torch.cuda import is_available as is_cuda_available
+
+    torch_device = "cuda" if is_cuda_available() else "cpu"
+    print(f"Using torch device '{torch_device}'.")
+except ModuleNotFoundError:
+    log.info("'torch' not installed.")
+
 # https://spacy.io/usage/processing-pipelines#built-in
 spacy_components = (
     "tagger",
@@ -110,10 +121,7 @@ embedding_map: t.Dict[
 
 try:
     import torch
-    from torch.cuda import is_available as is_cuda_available
     from transformers import AutoModel, AutoTokenizer
-
-    torch_device = "cuda" if is_cuda_available() else "cpu"
 
     class TransformersModel(ModelBase):
         def __init__(self, model: EmbeddingModel):
@@ -163,7 +171,6 @@ except ModuleNotFoundError:
 
 try:
     from sentence_transformers import SentenceTransformer
-    from torch.cuda import is_available as is_cuda_available
 
     class SentenceTransformersModel(ModelBase):
         def __init__(self, model: EmbeddingModel):
