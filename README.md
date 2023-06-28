@@ -23,11 +23,11 @@ You first need to pull this repository.
 Then execute the following in the project directory:
 
 ```sh
-docker-compose build cpu
+docker compose build cpu
 # OR, if you need extras:
-docker-compose build --build-arg EXTRAS="levenshtein transformers" cpu
+docker compose build --build-arg EXTRAS="levenshtein transformers" cpu
 # Start the CPU-only container
-docker-compose up cpu
+docker compose up cpu
 ```
 
 In case you have a **CUDA-enabled GPU**, you can replace `cpu` with `cuda` in the above commands and make full use of your card for advanced models like BERT.
