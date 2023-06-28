@@ -37,7 +37,14 @@
             inherit python;
             projectDir = ./.;
             preferWheels = true;
-            # overrides = poetry2nix.legacyPackages.${system}.overrides.withDefaults (self: super: {});
+            overrides = poetry2nix.legacyPackages.${system}.overrides.withDefaults (self: super: {
+              ml-dtypes = super.ml-dtypes.overridePythonAttrs (old: {
+                buildInputs = (old.buildInputs or []) ++ [super.setuptools super.pybind11];
+              });
+              sentence-transformers = super.sentence-transformers.overridePythonAttrs (old: {
+                buildInputs = (old.buildInputs or []) ++ [super.setuptools];
+              });
+            });
           };
           docker = pkgs.dockerTools.buildLayeredImage {
             name = "nlp-service";
