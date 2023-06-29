@@ -2,9 +2,12 @@ from __future__ import annotations
 
 import itertools
 import logging
+import tarfile
 import typing as t
+import urllib.request
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from pathlib import Path
 
 import arg_services
 import grpc
@@ -14,7 +17,14 @@ import spacy
 import typer
 from arg_services.nlp.v1 import nlp_pb2, nlp_pb2_grpc
 from mashumaro.mixins.dict import DataClassDictMixin
-from spacy.cli.download import download as spacy_download
+from rich.progress import Progress
+from spacy import about as spacy_about
+from spacy.cli.download import (
+    get_latest_version as spacy_get_latest_version,
+)
+from spacy.cli.download import (
+    get_model_filename as spacy_get_model_filename,
+)
 from spacy.language import Language as SpacyLanguage
 from spacy.tokens import Doc, DocBin
 from thinc.types import Floats1d as SpacyVector
@@ -251,15 +261,64 @@ spacy_cache: dict[SpacyKey, SpacyCache] = {}
 model_cache: dict[EmbeddingModel, ModelBase] = {}
 
 
+class UrlReportHook:
+    def __init__(self, progress: Progress, name: str):
+        self.task = None
+        self.progress = progress
+        self.name = name
+
+    def __call__(self, block_num: int, block_size: int, total_size: int):
+        if self.task is None:
+            self.task = self.progress.add_task(
+                f"Downloading {self.name}...", total=total_size
+            )
+
+        downloaded = block_num * block_size
+
+        if downloaded < total_size:
+            self.progress.update(self.task, completed=downloaded)
+
+        if self.progress.finished:
+            self.task = None
+
+
+def get_tarfile_members(
+    tf: tarfile.TarFile, prefix: str
+) -> t.Generator[tarfile.TarInfo, None, None]:
+    prefix_len = len(prefix)
+
+    for member in tf.getmembers():
+        if member.path.startswith(prefix):
+            member.path = member.path[prefix_len:]
+            yield member
+
+
 def _load_spacy_model(name: t.Optional[str]) -> SpacyLanguage:
     if not name:
         return spacy.blank("en")
 
-    try:
-        return spacy.load(name)
-    except OSError:
-        spacy_download(name)
-        return spacy.load(name)
+    version = spacy_get_latest_version(name)
+    filename = spacy_get_model_filename(name, version, sdist=True)
+    versioned_name = f"{name}-{version}"
+    path = Path.home() / ".cache" / "nlp-service" / "spacy" / versioned_name
+    tmpfile = path.with_suffix(".tar.gz")
+
+    if not path.exists():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        download_url = f"{spacy_about.__download_url__}/{filename}"
+        with Progress() as progress:
+            urllib.request.urlretrieve(
+                download_url, tmpfile, UrlReportHook(progress, versioned_name)
+            )
+
+        with tarfile.open(tmpfile, mode="r:gz") as tf:
+            member_prefix = f"{versioned_name}/{name}/{versioned_name}/"
+            members = get_tarfile_members(tf, member_prefix)
+            tf.extractall(path=path, members=members)
+
+        tmpfile.unlink()
+
+    return spacy.load(path)
 
 
 def _load_spacy(config: nlp_pb2.NlpConfig) -> SpacyCache:
