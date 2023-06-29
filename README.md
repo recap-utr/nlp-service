@@ -14,32 +14,22 @@ We will discuss the client at the end of this README.
 
 ## Installation and Setup
 
-We are using [poetry](https://python-poetry.org) to manage the dependencies.
-For easier setup, we also provide a `Dockerfile` and a `docker-compose` specification.
+We are using `nix` and `poetry` to manage the dependencies.
+We will soon provide a pre-built docker image for simplify usage of the NLP service.
 
-### Docker-Compose (recommended)
-
-You first need to pull this repository.
-Then execute the following in the project directory:
+### Nix (recommended)
 
 ```sh
-docker compose build cpu
-# OR, if you need extras:
-docker compose build --build-arg EXTRAS="levenshtein transformers" cpu
-# Start the CPU-only container
-docker compose up cpu
+nix run . -- "127.0.0.1:50100"
+# or alternatively
+nix develop -c poetry run python -m nlp_service "127.0.0.1:50100"
 ```
-
-In case you have a **CUDA-enabled GPU**, you can replace `cpu` with `cuda` in the above commands and make full use of your card for advanced models like BERT.
 
 ### Poetry (advanced)
 
 ```sh
 # The server dependencies are optional, thus they have to be installed explicitly.
-poetry install --extras server
-# To get startet, we recommend to use the default spacy model.
-# In case you are dealing with English texts, you can run.
-poetry run python -m spacy download core_en_web_lg
+poetry install --extras all
 # To run the server, you need to specify the address it should listen on.
 # In this example, it should liston on port 5678 on localhost.
 poetry run python -m nlp_service "127.0.0.1:50100"

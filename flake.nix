@@ -44,7 +44,7 @@
             created = "now";
             config = {
               entrypoint = [(lib.getExe self'.packages.default)];
-              cmd = ["--help"];
+              cmd = ["0.0.0.0:50100"];
             };
           };
         };
