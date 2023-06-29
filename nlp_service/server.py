@@ -183,32 +183,12 @@ try:
 
             return embeddings[0]
 
-    embedding_map[
-        nlp_pb2.EmbeddingType.EMBEDDING_TYPE_SENTENCE_TRANSFORMERS
-    ] = SentenceTransformersModel
+    embedding_map[nlp_pb2.EmbeddingType.EMBEDDING_TYPE_SENTENCE_TRANSFORMERS] = (
+        SentenceTransformersModel
+    )
 
 except ModuleNotFoundError:
     log.info("'sentence-transformers' not installed.")
-
-
-try:
-    import tensorflow_hub as hub
-
-    class TensorflowHubModel(ModelBase):
-        def __init__(self, model: EmbeddingModel):
-            self.model: t.Any = hub.load(model.model_name)
-
-        def vector(self, text: str) -> SpacyVector:
-            embeddings: t.Sequence[t.Any] = self.model([text])
-
-            return embeddings[0].numpy()
-
-    embedding_map[
-        nlp_pb2.EmbeddingType.EMBEDDING_TYPE_TENSORFLOW_HUB
-    ] = TensorflowHubModel
-
-except ModuleNotFoundError:
-    log.info("'tensorflow-hub' not installed.")
 
 
 try:
