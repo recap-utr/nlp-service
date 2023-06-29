@@ -7,12 +7,18 @@
       url = "github:nix-community/poetry2nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    flocken = {
+      url = "github:mirkolenz/flocken/v1";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
   outputs = inputs @ {
+    self,
     nixpkgs,
     flake-parts,
     systems,
     poetry2nix,
+    flocken,
     ...
   }:
     flake-parts.lib.mkFlake {inherit inputs;} {
@@ -27,6 +33,15 @@
         python = pkgs.python310;
         poetry = pkgs.poetry;
       in {
+        apps.dockerManifest = {
+          type = "app";
+          program = lib.getExe (flocken.legacyPackages.${system}.mkDockerManifest {
+            branch = builtins.getEnv "GITHUB_REF_NAME";
+            name = "ghcr.io/" + builtins.getEnv "GITHUB_REPOSITORY";
+            version = builtins.getEnv "VERSION";
+            images = with self.packages; [x86_64-linux.docker];
+          });
+        };
         packages = {
           default = poetry2nix.legacyPackages.${system}.mkPoetryApplication {
             inherit python;
@@ -46,6 +61,10 @@
               entrypoint = [(lib.getExe self'.packages.default)];
               cmd = ["0.0.0.0:50100"];
             };
+          };
+          releaseEnv = pkgs.buildEnv {
+            name = "release-env";
+            paths = [poetry python];
           };
         };
         devShells.default = pkgs.mkShell {

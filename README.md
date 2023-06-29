@@ -14,10 +14,17 @@ We will discuss the client at the end of this README.
 
 ## Installation and Setup
 
-We are using `nix` and `poetry` to manage the dependencies.
-We will soon provide a pre-built docker image for simplify usage of the NLP service.
+We are using `nix` and `poetry` to manage the dependencies and provide a ready-to-use Docker image.
 
-### Nix (recommended)
+### Docker (recommended)
+
+The container caches the downloaded models, so you should not pass `--rm` to `docker run`.
+
+```sh
+docker run ghcr.io/recap-utr/nlp-service:latest "0.0.0.0:50100"
+```
+
+### Nix (advanced)
 
 ```sh
 nix run . -- "127.0.0.1:50100"
