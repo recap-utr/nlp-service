@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.4.4](https://github.com/recap-utr/nlp-service/compare/v1.4.3...v1.4.4) (2023-06-29)
+
+
+### Bug Fixes
+
+* add ld_preload to nix flake ([45070d7](https://github.com/recap-utr/nlp-service/commit/45070d7a8adae7b312354f35272e3aa84c5c2ad3))
+* download spacy models to custom cache ([43013d8](https://github.com/recap-utr/nlp-service/commit/43013d8b7a1fdd8b41e1d72d889c8055a40bb646))
+* remove tensorflow due to cuda issues ([08dfae0](https://github.com/recap-utr/nlp-service/commit/08dfae09f5c86528a8a08015a2c0a119bc340e1e))
+* replace dockerfiles with nix-based build ([be19aff](https://github.com/recap-utr/nlp-service/commit/be19affa32a2bc200fb353556c049345649c31e9))
+
 ## [1.4.3](https://github.com/recap-utr/nlp-service/compare/v1.4.2...v1.4.3) (2023-06-07)
 
 
