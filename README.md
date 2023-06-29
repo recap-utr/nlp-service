@@ -151,7 +151,7 @@ config = nlp_pb2.NlpConfig(
 # It is also possible to determine a similarity score without the use of embeddings.
 config = nlp_pb2.NlpConfig(
   language="en",
-  spacy_model="en_core_web_lg",
+  spacy_model="en_core_web_sm",
   # Traditional metric (Jaccard similarity and Levenshtein edit distance) are also available
   similarity_method=nlp_pb2.SimilarityMethod.SIMILARITY_METHOD_EDIT
 )
