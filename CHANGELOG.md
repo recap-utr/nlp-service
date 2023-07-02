@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.6](https://github.com/recap-utr/nlp-service/compare/v1.4.5...v1.4.6) (2023-07-02)
+
+
+### Bug Fixes
+
+* **ci:** add correct permissions ([ed5724f](https://github.com/recap-utr/nlp-service/commit/ed5724fe6565c75fc66134e55452391319b659a8))
+
 ## [1.4.5](https://github.com/recap-utr/nlp-service/compare/v1.4.4...v1.4.5) (2023-07-02)
 
 
