@@ -27,8 +27,8 @@ docker run ghcr.io/recap-utr/nlp-service:latest "0.0.0.0:50100"
 ### Nix (advanced)
 
 ```sh
-nix run . -- "127.0.0.1:50100"
-# or alternatively
+nix run github:recap-utr/nlp-service -- "127.0.0.1:50100"
+# or after cloning this repository
 nix develop -c poetry run python -m nlp_service "127.0.0.1:50100"
 ```
 
