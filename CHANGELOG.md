@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.5](https://github.com/recap-utr/nlp-service/compare/v1.4.4...v1.4.5) (2023-07-02)
+
+
+### Bug Fixes
+
+* **ci:** automatically build docker image ([9bbdc77](https://github.com/recap-utr/nlp-service/commit/9bbdc7788d49dc85cbf32a9a4ba14c2cf56674c4))
+
 ## [1.4.4](https://github.com/recap-utr/nlp-service/compare/v1.4.3...v1.4.4) (2023-06-29)
 
 
