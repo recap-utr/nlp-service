@@ -33,6 +33,11 @@
         python = pkgs.python310;
         poetry = pkgs.poetry;
       in {
+        _module.args.pkgs = import nixpkgs {
+          inherit system;
+          config.allowUnfree = true;
+          config.cudaSupport = true;
+        };
         apps.dockerManifest = {
           type = "app";
           program = lib.getExe (flocken.legacyPackages.${system}.mkDockerManifest {
