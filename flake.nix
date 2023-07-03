@@ -37,6 +37,7 @@
           inherit system;
           config.allowUnfree = true;
           config.cudaSupport = true;
+          overlays = [poetry2nix.overlay];
         };
         apps.dockerManifest = {
           type = "app";
@@ -48,11 +49,11 @@
           });
         };
         packages = {
-          default = poetry2nix.legacyPackages.${system}.mkPoetryApplication {
+          default = pkgs.poetry2nix.mkPoetryApplication {
             inherit python;
             projectDir = ./.;
             preferWheels = true;
-            overrides = poetry2nix.legacyPackages.${system}.overrides.withDefaults (self: super: {
+            overrides = pkgs.poetry2nix.overrides.withDefaults (self: super: {
               sentence-transformers = super.sentence-transformers.overridePythonAttrs (old: {
                 buildInputs = (old.buildInputs or []) ++ [super.setuptools];
               });
