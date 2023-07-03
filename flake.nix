@@ -53,7 +53,7 @@
               });
             });
           };
-          docker = pkgs.dockerTools.buildLayeredImage {
+          docker = pkgs.dockerTools.buildImage {
             name = "nlp-service";
             tag = "latest";
             created = "now";
