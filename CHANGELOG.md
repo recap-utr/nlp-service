@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.7](https://github.com/recap-utr/nlp-service/compare/v1.4.6...v1.4.7) (2023-07-03)
+
+
+### Bug Fixes
+
+* trigger rebuild ([93f1f93](https://github.com/recap-utr/nlp-service/commit/93f1f9389d370a3880a6e8b5bf635a5b6a65e066))
+
 ## [1.4.6](https://github.com/recap-utr/nlp-service/compare/v1.4.5...v1.4.6) (2023-07-02)
 
 
