@@ -74,10 +74,9 @@
         };
         devShells.default = pkgs.mkShell {
           packages = [poetry python];
-          nativeBuildInputs = with pkgs;
-            lib.optionals stdenv.isLinux [cudaPackages.autoAddOpenGLRunpathHook];
           POETRY_VIRTUALENVS_IN_PROJECT = true;
           LD_LIBRARY_PATH = with pkgs; lib.makeLibraryPath [stdenv.cc.cc zlib];
+          LD_PRELOAD = "/run/opengl-driver/lib/libcuda.so";
           shellHook = ''
             ${lib.getExe poetry} env use ${lib.getExe python}
             ${lib.getExe poetry} install --all-extras --no-root
