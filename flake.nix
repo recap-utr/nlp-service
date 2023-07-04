@@ -32,11 +32,19 @@
       }: let
         python = pkgs.python310;
         poetry = pkgs.poetry;
+        entrypoint = pkgs.writeShellScriptBin "entrypoint" ''
+          CUDADIR=/lib/x86_64-linux-gnu
+          ${pkgs.busybox}/bin/mkdir -p "$CUDADIR"
+          export LD_PRELOAD=$(${pkgs.busybox}/bin/find "$CUDADIR" -name "libcuda.so.*" | ${pkgs.busybox}/bin/sort -r | ${pkgs.busybox}/bin/head -n 1)
+          exec ${lib.getExe self'.packages.default} "$@"
+        '';
       in {
         _module.args.pkgs = import nixpkgs {
           inherit system;
-          config.allowUnfree = true;
-          config.cudaSupport = true;
+          config = {
+            allowUnfree = true;
+            cudaSupport = true;
+          };
           overlays = [poetry2nix.overlay];
         };
         apps.dockerManifest = {
@@ -64,11 +72,8 @@
             tag = "latest";
             created = "now";
             config = {
-              entrypoint = [(lib.getExe self'.packages.default)];
+              entrypoint = [(lib.getExe entrypoint)];
               cmd = ["0.0.0.0:50100"];
-              env = [
-                "LD_LIBRARY_PATH=/lib/x86_64-linux-gnu"
-              ];
             };
           };
           releaseEnv = pkgs.buildEnv {
