@@ -30,7 +30,7 @@
         self',
         ...
       }: let
-        python = pkgs.python310;
+        python = pkgs.python311;
         poetry = pkgs.poetry;
         entrypoint = pkgs.writeShellScriptBin "entrypoint" ''
           export LD_PRELOAD=$(${pkgs.busybox}/bin/find /lib/x86_64-linux-gnu -name "libcuda.so.*" -type f 2>/dev/null)
