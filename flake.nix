@@ -66,6 +66,9 @@
             config = {
               entrypoint = [(lib.getExe self'.packages.default)];
               cmd = ["0.0.0.0:50100"];
+              env = [
+                "LD_LIBRARY_PATH=/lib/x86_64-linux-gnu"
+              ];
             };
           };
           releaseEnv = pkgs.buildEnv {
