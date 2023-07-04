@@ -33,9 +33,7 @@
         python = pkgs.python310;
         poetry = pkgs.poetry;
         entrypoint = pkgs.writeShellScriptBin "entrypoint" ''
-          CUDADIR=/lib/x86_64-linux-gnu
-          ${pkgs.busybox}/bin/mkdir -p "$CUDADIR"
-          export LD_PRELOAD=$(${pkgs.busybox}/bin/find "$CUDADIR" -name "libcuda.so.*" | ${pkgs.busybox}/bin/sort -r | ${pkgs.busybox}/bin/head -n 1)
+          export LD_PRELOAD=$(${pkgs.busybox}/bin/find /lib/x86_64-linux-gnu -name "libcuda.so.*" -type f 2>/dev/null)
           exec ${lib.getExe self'.packages.default} "$@"
         '';
       in {
