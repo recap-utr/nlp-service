@@ -45,14 +45,23 @@
           };
           overlays = [poetry2nix.overlay];
         };
-        apps.dockerManifest = {
-          type = "app";
-          program = lib.getExe (flocken.legacyPackages.${system}.mkDockerManifest {
-            branch = builtins.getEnv "GITHUB_REF_NAME";
-            name = "ghcr.io/" + builtins.getEnv "GITHUB_REPOSITORY";
-            version = builtins.getEnv "VERSION";
-            images = with self.packages; [x86_64-linux.docker];
-          });
+        apps = {
+          default = {
+            type = "app";
+            program = lib.getExe (pkgs.writeShellScriptBin "nlp-service" ''
+              export LD_PRELOAD=/run/opengl-driver/lib/libcuda.so.1
+              exec ${lib.getExe self'.packages.default} "$@"
+            '');
+          };
+          dockerManifest = {
+            type = "app";
+            program = lib.getExe (flocken.legacyPackages.${system}.mkDockerManifest {
+              branch = builtins.getEnv "GITHUB_REF_NAME";
+              name = "ghcr.io/" + builtins.getEnv "GITHUB_REPOSITORY";
+              version = builtins.getEnv "VERSION";
+              images = with self.packages; [x86_64-linux.docker];
+            });
+          };
         };
         packages = {
           default = pkgs.poetry2nix.mkPoetryApplication {
