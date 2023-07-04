@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.9](https://github.com/recap-utr/nlp-service/compare/v1.4.8...v1.4.9) (2023-07-04)
+
+
+### Bug Fixes
+
+* set ld_preload in docker entrypoint ([1285bf5](https://github.com/recap-utr/nlp-service/commit/1285bf5edca2a0190d89d413bd89cd14e0757c07))
+
 ## [1.4.8](https://github.com/recap-utr/nlp-service/compare/v1.4.7...v1.4.8) (2023-07-04)
 
 
