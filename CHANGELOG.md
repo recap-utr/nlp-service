@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.8](https://github.com/recap-utr/nlp-service/compare/v1.4.7...v1.4.8) (2023-07-04)
+
+
+### Bug Fixes
+
+* add ld_library_path to docker image ([9d75c4b](https://github.com/recap-utr/nlp-service/commit/9d75c4bc3290685f3619255563ff660401d71f70))
+
 ## [1.4.7](https://github.com/recap-utr/nlp-service/compare/v1.4.6...v1.4.7) (2023-07-03)
 
 

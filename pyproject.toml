@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nlp-service"
-version = "1.4.7"
+version = "1.4.8"
 description = "Microservice for NLP tasks using gRPC"
 authors = ["Mirko Lenz <info@mirko-lenz.de>"]
 license = "MIT"
