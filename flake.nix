@@ -95,6 +95,8 @@
           shellHook = ''
             ${lib.getExe poetry} env use ${lib.getExe python}
             ${lib.getExe poetry} install --all-extras --no-root
+            set -a
+            source .env
           '';
         };
       };
