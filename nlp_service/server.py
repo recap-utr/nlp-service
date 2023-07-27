@@ -204,8 +204,6 @@ except ModuleNotFoundError:
 try:
     import openai
 
-    openai.api_key_path = "./openai_api_key.txt"
-
     class OpenaiModel(ModelBase):
         def __init__(self, model: EmbeddingModel):
             self.model_name: str = model.model_name
