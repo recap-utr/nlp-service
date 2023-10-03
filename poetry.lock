@@ -3014,5 +3014,5 @@ wmd = ["gensim"]
 
 [metadata]
 lock-version = "2.0"
-python-versions = ">=3.10, <3.12"
-content-hash = "42884473c806e5f42afebe489dad14f8e6984c65e6a18507a64a927844730c5a"
+python-versions = ">=3.12, <3.13"
+content-hash = "e92dce92391fe21b64aef0804c842283414a160d223de26e912ac448c3f59feb"
