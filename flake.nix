@@ -8,7 +8,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     flocken = {
-      url = "github:mirkolenz/flocken/v1";
+      url = "github:mirkolenz/flocken/v2";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
@@ -53,15 +53,6 @@
               exec ${lib.getExe self'.packages.default} "$@"
             '');
           };
-          dockerManifest = {
-            type = "app";
-            program = lib.getExe (flocken.legacyPackages.${system}.mkDockerManifest {
-              branch = builtins.getEnv "GITHUB_REF_NAME";
-              name = "ghcr.io/" + builtins.getEnv "GITHUB_REPOSITORY";
-              version = builtins.getEnv "VERSION";
-              images = with self.packages; [x86_64-linux.docker];
-            });
-          };
         };
         packages = {
           default = pkgs.poetry2nix.mkPoetryApplication {
@@ -87,6 +78,14 @@
             name = "release-env";
             paths = [poetry python];
           };
+        };
+        legacyPackages.dockerManifest = flocken.legacyPackages.${system}.mkDockerManifest {
+          github = {
+            enable = true;
+            token = builtins.getEnv "GH_TOKEN";
+          };
+          version = builtins.getEnv "VERSION";
+          images = with self.packages; [x86_64-linux.docker];
         };
         devShells.default = pkgs.mkShell {
           packages = [poetry python];

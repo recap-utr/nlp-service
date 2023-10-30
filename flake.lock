@@ -23,11 +23,11 @@
         "nixpkgs-lib": "nixpkgs-lib_2"
       },
       "locked": {
-        "lastModified": 1698579227,
-        "narHash": "sha256-KVWjFZky+gRuWennKsbo6cWyo7c/z/VgCte5pR9pEKg=",
+        "lastModified": 1696343447,
+        "narHash": "sha256-B2xAZKLkkeRFG5XcHHSXXcP7To9Xzr59KXeZiRf4vdQ=",
         "owner": "hercules-ci",
         "repo": "flake-parts",
-        "rev": "f76e870d64779109e41370848074ac4eaa1606ec",
+        "rev": "c9afaba3dfa4085dbd2ccb38dfade5141e33d9d4",
         "type": "github"
       },
       "original": {
@@ -63,16 +63,16 @@
         "systems": "systems"
       },
       "locked": {
-        "lastModified": 1696830765,
-        "narHash": "sha256-SFVBx++gkMDoRCqn5h4BRnOPl45zVnlMbPHqP+2P0mw=",
+        "lastModified": 1698065192,
+        "narHash": "sha256-M4EToYSa9OaBwo3g3eLtpTvO0vb8CcFy68oKMFFt7wA=",
         "owner": "mirkolenz",
         "repo": "flocken",
-        "rev": "3feba63d697993573ade0f4bf23556a6e13c0e69",
+        "rev": "e4905e0e970df929ff53c8418a804745d9b40e01",
         "type": "github"
       },
       "original": {
         "owner": "mirkolenz",
-        "ref": "v1",
+        "ref": "v2",
         "repo": "flocken",
         "type": "github"
       }
