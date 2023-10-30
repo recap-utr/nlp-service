@@ -43,7 +43,7 @@
             allowUnfree = true;
             cudaSupport = true;
           };
-          overlays = [poetry2nix.overlay];
+          overlays = [poetry2nix.overlays.default];
         };
         apps = {
           default = {
