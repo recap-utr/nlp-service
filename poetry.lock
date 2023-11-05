@@ -138,21 +138,21 @@ files = [
 
 [[package]]
 name = "arg-services"
-version = "1.4.2"
+version = "1.4.4"
 description = "gRPC definitions for microservice-based argumentation machines"
 category = "main"
 optional = false
-python-versions = ">=3.9,<4.0"
+python-versions = ">=3.10,<4.0"
 files = [
-    {file = "arg_services-1.4.2-py3-none-any.whl", hash = "sha256:8af5686ea4db21b761927dc23d7ae088278f624028ee88e56bed6c5e87a80b41"},
-    {file = "arg_services-1.4.2.tar.gz", hash = "sha256:8e681e3fdc31c791e3b0116fb6379dd7d5798df1a3e6612ecef0e917283ba851"},
+    {file = "arg_services-1.4.4-py3-none-any.whl", hash = "sha256:ed0869304f38096076a02bc50ad9d15dde8c73f2005bf39a029cb744d647b9fb"},
+    {file = "arg_services-1.4.4.tar.gz", hash = "sha256:b498dbfb512f56cfb29a40bb07e1bb0670a6bf7da97a346b8636cc49830a3245"},
 ]
 
 [package.dependencies]
-grpc-stubs = ">=1.53.0.1,<2.0.0.0"
-grpcio = ">=1.53.0,<2.0.0"
-grpcio-reflection = ">=1.53.0,<2.0.0"
-protobuf = ">=4.22.1,<5.0.0"
+grpc-stubs = ">=1.53,<2.0"
+grpcio = ">=1.53,<2.0"
+grpcio-reflection = ">=1.53,<2.0"
+protobuf = ">=4.22,<5.0"
 
 [[package]]
 name = "async-timeout"
