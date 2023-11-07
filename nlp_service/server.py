@@ -207,11 +207,12 @@ try:
     class OpenaiModel(ModelBase):
         def __init__(self, model: EmbeddingModel):
             self.model_name: str = model.model_name
+            self.client = openai.Client()
 
         def vector(self, text: str) -> SpacyVector:
-            res: t.Any = openai.Embedding.create(input=[text], model=self.model_name)
+            res = self.client.embeddings.create(input=[text], model=self.model_name)
 
-            return t.cast(SpacyVector, np.array(res["data"][0]["embedding"]))
+            return t.cast(SpacyVector, np.array(res.data[0].embedding))
 
     embedding_map[nlp_pb2.EmbeddingType.EMBEDDING_TYPE_OPENAI] = OpenaiModel
 
