@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.10](https://github.com/recap-utr/nlp-service/compare/v1.4.9...v1.4.10) (2023-11-07)
+
+
+### Bug Fixes
+
+* update openai library to v1 ([8493556](https://github.com/recap-utr/nlp-service/commit/84935568da53aae271464ae7fbfc68432fe4e700))
+
 ## [1.4.9](https://github.com/recap-utr/nlp-service/compare/v1.4.8...v1.4.9) (2023-07-04)
 
 
