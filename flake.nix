@@ -95,7 +95,7 @@
             ${lib.getExe poetry} env use ${lib.getExe python}
             ${lib.getExe poetry} install --all-extras --no-root --sync
             set -a
-            source .env
+            source .env 2> /dev/null
           '';
         };
       };
