@@ -122,7 +122,7 @@ class SpacyModel(ModelBase):
         return doc.vector
 
 
-embedding_map: t.Dict[
+embedding_map: dict[
     nlp_pb2.EmbeddingType.ValueType, t.Callable[[EmbeddingModel], ModelBase]
 ] = {
     nlp_pb2.EmbeddingType.EMBEDDING_TYPE_SPACY: SpacyModel,
@@ -292,7 +292,7 @@ def get_tarfile_members(
             yield member
 
 
-def _load_spacy_model(name: t.Optional[str]) -> SpacyLanguage:
+def _load_spacy_model(name: str | None) -> SpacyLanguage:
     if not name:
         return spacy.blank("en")
 
@@ -355,7 +355,7 @@ def _load_spacy(config: nlp_pb2.NlpConfig) -> SpacyCache:
     return spacy_cache[key]
 
 
-pool_map: t.Dict[int, t.Callable[[NumpyMatrix], NumpyVector]] = {
+pool_map: dict[int, t.Callable[[NumpyMatrix], NumpyVector]] = {
     nlp_pb2.Pooling.POOLING_MEAN: lambda x: np.mean(x, axis=0),
     nlp_pb2.Pooling.POOLING_FIRST: lambda x: x[0],
     nlp_pb2.Pooling.POOLING_LAST: lambda x: x[-1],
@@ -489,7 +489,7 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
 
         nlp, doc_cache = _load_spacy(req.config)
         texts = itertools.chain.from_iterable(
-            ((x.text1, x.text2) for x in req.text_tuples)
+            (x.text1, x.text2) for x in req.text_tuples
         )
 
         if new_texts := [text for text in texts if text not in doc_cache]:

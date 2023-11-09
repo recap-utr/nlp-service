@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import typing as t
-
 import numpy as np
 import spacy
 from arg_services.nlp.v1 import nlp_pb2
@@ -28,9 +26,9 @@ def blank(
 
 def docbin2docs(
     docbin_bytes: bytes,
-    language: t.Union[str, SpacyLanguage],
+    language: str | SpacyLanguage,
     similarity_method: nlp_pb2.SimilarityMethod.ValueType = nlp_pb2.SimilarityMethod.SIMILARITY_METHOD_UNSPECIFIED,
-) -> t.Tuple[Doc, ...]:
+) -> tuple[Doc, ...]:
     if isinstance(language, str):
         language = blank(language, similarity_method)
 

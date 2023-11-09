@@ -3,7 +3,7 @@ from __future__ import annotations
 import itertools
 import typing as t
 
-import nltk.metrics as nltk_dist
+import nltk.metrics
 import numpy as np
 from arg_services.nlp.v1 import nlp_pb2
 from scipy.spatial import distance as scipy_dist
@@ -174,7 +174,7 @@ def fbow_jaccard_factory(u: NumpyMatrix):
 
 
 def edit(text1: str, text2: str) -> float:
-    return dist2sim(nltk_dist.edit_distance(text1, text2))
+    return dist2sim(nltk.metrics.edit_distance(text1, text2))
 
 
 def _edit(obj1: SpacyObj, obj2: SpacyObj) -> float:
@@ -182,7 +182,7 @@ def _edit(obj1: SpacyObj, obj2: SpacyObj) -> float:
 
 
 def jaccard(set1: t.AbstractSet[str], set2: t.AbstractSet[str]) -> float:
-    return dist2sim(nltk_dist.jaccard_distance(set1, set2))
+    return dist2sim(nltk.metrics.jaccard_distance(set1, set2))
 
 
 def _jaccard(obj1: SpacyObj, obj2: SpacyObj) -> float:
@@ -192,14 +192,14 @@ def _jaccard(obj1: SpacyObj, obj2: SpacyObj) -> float:
     return jaccard(set1, set2)
 
 
-def _token_set(obj: SpacyObj) -> t.Set[str]:
+def _token_set(obj: SpacyObj) -> set[str]:
     if isinstance(obj, Token):
         return set() if obj.is_stop else {obj.text}
 
     return {t.text for t in obj if not t.is_stop}
 
 
-def _token_vectors(obj: SpacyObj) -> t.List[SpacyVector]:
+def _token_vectors(obj: SpacyObj) -> list[SpacyVector]:
     return [obj.vector] if isinstance(obj, Token) else [t.vector for t in obj]
 
 
@@ -207,7 +207,7 @@ def dist2sim(distance: float) -> float:
     return 1 / (1 + distance)
 
 
-mapping: dict[t.Optional[str], t.Callable[[t.Any, t.Any], float]] = {
+mapping: dict[str | None, t.Callable[[t.Any, t.Any], float]] = {
     None: cosine,
     "cosine": cosine,
     "angular": angular,
@@ -266,7 +266,7 @@ class SimilarityFactory:
 try:
     from gensim.models import KeyedVectors
 
-    def _wmd_model(obj) -> t.Tuple[t.List[str], t.List[SpacyVector]]:
+    def _wmd_model(obj) -> tuple[list[str], list[SpacyVector]]:
         if isinstance(obj, Token):
             return ([], []) if obj.is_stop else ([obj.text], [obj.vector])
 
