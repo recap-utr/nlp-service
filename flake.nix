@@ -93,7 +93,7 @@
           LD_LIBRARY_PATH = with pkgs; lib.makeLibraryPath [stdenv.cc.cc zlib "/run/opengl-driver"];
           shellHook = ''
             ${lib.getExe poetry} env use ${lib.getExe python}
-            ${lib.getExe poetry} install --all-extras --no-root
+            ${lib.getExe poetry} install --all-extras --no-root --sync
             set -a
             source .env
           '';
