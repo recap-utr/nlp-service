@@ -1331,14 +1331,14 @@ wheel = "*"
 
 [[package]]
 name = "openai"
-version = "1.1.2"
+version = "1.2.0"
 description = "Client library for the openai API"
 category = "main"
 optional = true
 python-versions = ">=3.7.1"
 files = [
-    {file = "openai-1.1.2-py3-none-any.whl", hash = "sha256:72fa414378913ca74432ac618ca6cdfd78a502fcfad1e06cc499b9dba8ff2c8e"},
-    {file = "openai-1.1.2.tar.gz", hash = "sha256:bcb4d1fd471cf616031053636841acdc820cd42cbc6cd3e4036c85f682752656"},
+    {file = "openai-1.2.0-py3-none-any.whl", hash = "sha256:864c3c0d611e555e92be2960043d5f0ca3b995847fa59acd5b41faa00f9b16e0"},
+    {file = "openai-1.2.0.tar.gz", hash = "sha256:61b273f813534df1d91cb185095de52471ec51198f4ea355bf21692f6c4b9a19"},
 ]
 
 [package.dependencies]
