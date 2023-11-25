@@ -14,7 +14,7 @@ jobs:
       - uses: docker/setup-qemu-action@v3
         with:
           platforms: arm64
-      - uses: DeterminateSystems/nix-installer-action@v7
+      - uses: DeterminateSystems/nix-installer-action@v8
         with:
           extra-conf: |
             extra-platforms = aarch64-linux
