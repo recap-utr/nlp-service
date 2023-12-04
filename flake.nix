@@ -36,6 +36,10 @@
           export LD_PRELOAD=$(${pkgs.busybox}/bin/find /lib/x86_64-linux-gnu -name "libcuda.so.*" -type f 2>/dev/null)
           exec ${lib.getExe self'.packages.default} "$@"
         '';
+        betterproto = python.pkgs.callPackage ./betterproto.nix {};
+        betterprotoCompiler = betterproto.overridePythonAttrs (old: {
+          propagatedBuildInputs = old.propagatedBuildInputs ++ old.passthru.optional-dependencies.compiler;
+        });
       in {
         _module.args.pkgs = import nixpkgs {
           inherit system;
@@ -59,11 +63,6 @@
             inherit python;
             projectDir = ./.;
             preferWheels = true;
-            overrides = pkgs.poetry2nix.overrides.withDefaults (self: super: {
-              sentence-transformers = super.sentence-transformers.overridePythonAttrs (old: {
-                buildInputs = (old.buildInputs or []) ++ [super.setuptools];
-              });
-            });
           };
           docker = pkgs.dockerTools.buildImage {
             name = "nlp-service";
@@ -78,6 +77,19 @@
             name = "release-env";
             paths = [poetry python];
           };
+          betterproto = python.pkgs.toPythonApplication betterprotoCompiler;
+          bufGenerate = pkgs.writeShellApplication {
+            name = "buf-generate";
+            runtimeInputs = [self'.packages.betterproto];
+            text = ''
+              ${lib.getExe pkgs.buf} generate buf.build/recap/arg-services
+              {
+                echo "# type: ignore"
+                cat ./gen/arg_services/nlp/v1/__init__.py
+              } > ./nlp_service/nlp_pb.py
+              rm -rf ./gen
+            '';
+          };
         };
         legacyPackages.dockerManifest = flocken.legacyPackages.${system}.mkDockerManifest {
           github = {
@@ -88,7 +100,7 @@
           images = with self.packages; [x86_64-linux.docker];
         };
         devShells.default = pkgs.mkShell {
-          packages = [poetry python];
+          packages = [poetry python self'.packages.bufGenerate];
           POETRY_VIRTUALENVS_IN_PROJECT = true;
           LD_LIBRARY_PATH = with pkgs; lib.makeLibraryPath [stdenv.cc.cc zlib "/run/opengl-driver"];
           shellHook = ''

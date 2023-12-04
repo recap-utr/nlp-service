@@ -226,7 +226,8 @@ data/
 
 # nix
 .envrc
-.direnv/
-.devenv/
+.direnv
+.devenv
 /result
 .venv
+.direnv

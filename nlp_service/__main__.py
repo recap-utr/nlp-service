@@ -1,3 +1,3 @@
-from nlp_service.server import app
+from nlp_service.cli import app
 
 app()

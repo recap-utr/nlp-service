@@ -1,16 +1,27 @@
-from __future__ import annotations
-
 import itertools
 import typing as t
 
 import nltk.metrics
 import numpy as np
-from arg_services.nlp.v1 import nlp_pb2
 from scipy.spatial import distance as scipy_dist
 from spacy.language import Language as SpacyLanguage
 from spacy.tokens import Token
 
+from nlp_service import nlp_pb
 from nlp_service.typing import NumpyMatrix, NumpyVector, SpacyObj, SpacyVector
+
+__all__ = (
+    "get",
+    "get_spacy",
+    "cosine",
+    "angular",
+    "dynamax_jaccard",
+    "maxpool_jaccard",
+    "dynamax_dice",
+    "dynamax_otsuka",
+    "edit",
+    "jaccard",
+)
 
 
 # https://github.com/babylonhealth/fuzzymax/blob/master/similarity/fuzzy.py
@@ -36,7 +47,7 @@ def cosine(vec1: NumpyVector, vec2: NumpyVector) -> float:
     return 0.0
 
 
-def _cosine(obj1: SpacyObj, obj2: SpacyObj) -> float:
+def cosine_spacy(obj1: SpacyObj, obj2: SpacyObj) -> float:
     return t.cast(float, 1 - scipy_dist.cosine(obj1.vector.data, obj2.vector.data))
 
 
@@ -56,7 +67,7 @@ def angular(vec1: NumpyVector, vec2: NumpyVector) -> float:
     return 0.0
 
 
-def _angular(obj1: SpacyObj, obj2: SpacyObj) -> float:
+def angular_spacy(obj1: SpacyObj, obj2: SpacyObj) -> float:
     return angular(t.cast(NumpyVector, obj1.vector), t.cast(NumpyVector, obj2.vector))
 
 
@@ -76,7 +87,7 @@ def dynamax_jaccard(x: NumpyMatrix, y: NumpyMatrix) -> float:
     return m_inter / m_union
 
 
-def _dynamax_jaccard(obj1: SpacyObj, obj2: SpacyObj) -> float:
+def dynamax_jaccard_spacy(obj1: SpacyObj, obj2: SpacyObj) -> float:
     vecs1 = _token_vectors(obj1)
     vecs2 = _token_vectors(obj2)
 
@@ -99,7 +110,7 @@ def maxpool_jaccard(x: NumpyMatrix, y: NumpyMatrix) -> float:
     return m_inter / m_union
 
 
-def _maxpool_jaccard(obj1: SpacyObj, obj2: SpacyObj) -> float:
+def maxpool_jaccard_spacy(obj1: SpacyObj, obj2: SpacyObj) -> float:
     vecs1 = _token_vectors(obj1)
     vecs2 = _token_vectors(obj2)
 
@@ -123,7 +134,7 @@ def dynamax_dice(x: NumpyMatrix, y: NumpyMatrix) -> float:
     return 2 * f_inter / (m_x_card + m_y_card)
 
 
-def _dynamax_dice(obj1, obj2) -> float:
+def dynamax_dice_spacy(obj1, obj2) -> float:
     vecs1 = _token_vectors(obj1)
     vecs2 = _token_vectors(obj2)
 
@@ -147,7 +158,7 @@ def dynamax_otsuka(x: NumpyMatrix, y: NumpyMatrix) -> float:
     return m_inter / np.sqrt(m_x_card * m_y_card)
 
 
-def _dynamax_otsuka(obj1: SpacyObj, obj2: SpacyObj) -> float:
+def dynamax_otsuka_spacy(obj1: SpacyObj, obj2: SpacyObj) -> float:
     vecs1 = _token_vectors(obj1)
     vecs2 = _token_vectors(obj2)
 
@@ -177,7 +188,7 @@ def edit(text1: str, text2: str) -> float:
     return dist2sim(nltk.metrics.edit_distance(text1, text2))
 
 
-def _edit(obj1: SpacyObj, obj2: SpacyObj) -> float:
+def edit_spacy(obj1: SpacyObj, obj2: SpacyObj) -> float:
     return edit(obj1.text, obj2.text)
 
 
@@ -185,7 +196,7 @@ def jaccard(set1: t.AbstractSet[str], set2: t.AbstractSet[str]) -> float:
     return dist2sim(nltk.metrics.jaccard_distance(set1, set2))
 
 
-def _jaccard(obj1: SpacyObj, obj2: SpacyObj) -> float:
+def jaccard_spacy(obj1: SpacyObj, obj2: SpacyObj) -> float:
     set1 = _token_set(obj1)
     set2 = _token_set(obj2)
 
@@ -207,45 +218,33 @@ def dist2sim(distance: float) -> float:
     return 1 / (1 + distance)
 
 
-mapping: dict[str | None, t.Callable[[t.Any, t.Any], float]] = {
-    None: cosine,
-    "cosine": cosine,
-    "angular": angular,
-    "dynamax_jaccard": dynamax_jaccard,
-    "maxpool_jaccard": maxpool_jaccard,
-    "dynamax_dice": dynamax_dice,
-    "dynamax_otsuka": dynamax_otsuka,
-    "edit": edit,
-    "jaccard": jaccard,
+mapping: dict[nlp_pb.SimilarityMethod, t.Callable[[t.Any, t.Any], float]] = {
+    nlp_pb.SimilarityMethod.UNSPECIFIED: cosine,
+    nlp_pb.SimilarityMethod.COSINE: cosine,
+    nlp_pb.SimilarityMethod.ANGULAR: angular,
+    nlp_pb.SimilarityMethod.DYNAMAX_JACCARD: dynamax_jaccard,
+    nlp_pb.SimilarityMethod.MAXPOOL_JACCARD: maxpool_jaccard,
+    nlp_pb.SimilarityMethod.DYNAMAX_DICE: dynamax_dice,
+    nlp_pb.SimilarityMethod.DYNAMAX_OTSUKA: dynamax_otsuka,
+    nlp_pb.SimilarityMethod.EDIT: edit,
+    nlp_pb.SimilarityMethod.JACCARD: jaccard,
 }
 
-proto_mapping: dict[
-    nlp_pb2.SimilarityMethod.ValueType, t.Callable[[t.Any, t.Any], float]
-] = {
-    nlp_pb2.SIMILARITY_METHOD_UNSPECIFIED: cosine,
-    nlp_pb2.SIMILARITY_METHOD_COSINE: cosine,
-    nlp_pb2.SIMILARITY_METHOD_ANGULAR: angular,
-    nlp_pb2.SIMILARITY_METHOD_DYNAMAX_JACCARD: dynamax_jaccard,
-    nlp_pb2.SIMILARITY_METHOD_MAXPOOL_JACCARD: maxpool_jaccard,
-    nlp_pb2.SIMILARITY_METHOD_DYNAMAX_DICE: dynamax_dice,
-    nlp_pb2.SIMILARITY_METHOD_DYNAMAX_OTSUKA: dynamax_otsuka,
-    nlp_pb2.SIMILARITY_METHOD_EDIT: edit,
-    nlp_pb2.SIMILARITY_METHOD_JACCARD: jaccard,
+spacy_mapping: dict[nlp_pb.SimilarityMethod, t.Callable[[t.Any, t.Any], float]] = {
+    nlp_pb.SimilarityMethod.UNSPECIFIED: cosine_spacy,
+    nlp_pb.SimilarityMethod.COSINE: cosine_spacy,
+    nlp_pb.SimilarityMethod.ANGULAR: angular_spacy,
+    nlp_pb.SimilarityMethod.DYNAMAX_JACCARD: dynamax_jaccard_spacy,
+    nlp_pb.SimilarityMethod.MAXPOOL_JACCARD: maxpool_jaccard_spacy,
+    nlp_pb.SimilarityMethod.DYNAMAX_DICE: dynamax_dice_spacy,
+    nlp_pb.SimilarityMethod.DYNAMAX_OTSUKA: dynamax_otsuka_spacy,
+    nlp_pb.SimilarityMethod.EDIT: edit_spacy,
+    nlp_pb.SimilarityMethod.JACCARD: jaccard_spacy,
 }
 
-spacy_mapping: dict[
-    nlp_pb2.SimilarityMethod.ValueType, t.Callable[[t.Any, t.Any], float]
-] = {
-    nlp_pb2.SIMILARITY_METHOD_UNSPECIFIED: _cosine,
-    nlp_pb2.SIMILARITY_METHOD_COSINE: _cosine,
-    nlp_pb2.SIMILARITY_METHOD_ANGULAR: _angular,
-    nlp_pb2.SIMILARITY_METHOD_DYNAMAX_JACCARD: _dynamax_jaccard,
-    nlp_pb2.SIMILARITY_METHOD_MAXPOOL_JACCARD: _maxpool_jaccard,
-    nlp_pb2.SIMILARITY_METHOD_DYNAMAX_DICE: _dynamax_dice,
-    nlp_pb2.SIMILARITY_METHOD_DYNAMAX_OTSUKA: _dynamax_otsuka,
-    nlp_pb2.SIMILARITY_METHOD_EDIT: _edit,
-    nlp_pb2.SIMILARITY_METHOD_JACCARD: _jaccard,
-}
+
+get = mapping.get
+get_spacy = spacy_mapping.get
 
 
 @SpacyLanguage.factory("similarity_factory")
@@ -285,9 +284,8 @@ try:
         return dist2sim(gensim_model.wmdistance(words1, words2))
 
     # TODO: Implement generic version `wmd` for use without spacy
-    # mapping["wmd"] = wmd
-    # proto_mapping[nlp_pb2.SimilarityMethod.SIMILARITY_METHOD_WMD] = wmd
-    spacy_mapping[nlp_pb2.SimilarityMethod.SIMILARITY_METHOD_WMD] = _wmd
+    # mapping[nlp_pb.SimilarityMethod.SimilarityMethod.WMD] = wmd
+    spacy_mapping[nlp_pb.SimilarityMethod.WMD] = _wmd
 
 
 except ImportError:
