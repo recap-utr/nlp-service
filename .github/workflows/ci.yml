@@ -24,8 +24,8 @@ jobs:
         id: semanticrelease
       - uses: pypa/gh-action-pypi-publish@release/v1
         if: ${{ steps.semanticrelease.outputs.released == 'true' }}
-      - run: nix run .#dockerManifest --impure
-        if: ${{ steps.semanticrelease.outputs.released == 'true' }}
-        env:
-          VERSION: ${{ steps.semanticrelease.outputs.version }}
-          GH_TOKEN: ${{ github.token }}
+      # - run: nix run .#dockerManifest --impure
+      #   if: ${{ steps.semanticrelease.outputs.released == 'true' }}
+      #   env:
+      #     VERSION: ${{ steps.semanticrelease.outputs.version }}
+      #     GH_TOKEN: ${{ github.token }}
