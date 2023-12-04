@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.0-beta.1](https://github.com/recap-utr/nlp-service/compare/v1.4.10...v2.0.0-beta.1) (2023-12-04)
+
+
+### ⚠ BREAKING CHANGES
+
+* Instead of using protobuf definitions from arg-services, the package now contains code generated via betterproto. We also added a library that can be used in other Python projects without needing to start a server. Lastly, a proper CLI has been integrated that (besides starting the server) allows to perform semantic retrieval in the local file system.
+
+### Features
+
+* rewrite the service completely ([07a53c6](https://github.com/recap-utr/nlp-service/commit/07a53c6de61cfde496634afaa50c31564504fd06))
+
 ## [1.4.10](https://github.com/recap-utr/nlp-service/compare/v1.4.9...v1.4.10) (2023-11-07)
 
 
