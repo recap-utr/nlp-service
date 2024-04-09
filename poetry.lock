@@ -34,13 +34,13 @@ trio = ["trio (<0.22)"]
 
 [[package]]
 name = "arg-services"
-version = "1.6.0"
+version = "1.7.1"
 description = "gRPC definitions for microservice-based argumentation machines"
 optional = false
-python-versions = ">=3.10,<4.0"
+python-versions = "<4.0,>=3.10"
 files = [
-    {file = "arg_services-1.6.0-py3-none-any.whl", hash = "sha256:a0765161fb444428196a71977a0041d29af97346a27a5c08846297cf8fd098b4"},
-    {file = "arg_services-1.6.0.tar.gz", hash = "sha256:70753c76137fc408531989ae7396d0cd05163e572b03f06a887849fb9c8106ad"},
+    {file = "arg_services-1.7.1-py3-none-any.whl", hash = "sha256:2eda8c5ceb83168fde077e466b39c78da0efb2a586ab2f8ea330fed596b70105"},
+    {file = "arg_services-1.7.1.tar.gz", hash = "sha256:c0b45a8ad2bd9b7f3b5a0c50df20fac6d56e0c6ad7e92f417a36881d42ba687e"},
 ]
 
 [package.dependencies]
