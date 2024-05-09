@@ -18,7 +18,7 @@ jobs:
         with:
           extra-conf: |
             extra-platforms = aarch64-linux
-      - uses: DeterminateSystems/magic-nix-cache-action@v4
+      - uses: DeterminateSystems/magic-nix-cache-action@v5
       - run: nix profile install .#releaseEnv
       - uses: cihelper/action-semanticrelease-poetry@v1
         id: semanticrelease
