@@ -66,9 +66,9 @@ custom_components: tuple[str, ...] = ("embeddings_factory", "similarity_factory"
 
 @dataclass(frozen=True, eq=True)
 class SerializableEmbeddingModel(DataClassDictMixin):
-    model_type: nlp_pb.EmbeddingType
+    model_type: int
     model_name: str
-    pooling_type: nlp_pb.Pooling
+    pooling_type: int
     pmean: float
 
     @classmethod
@@ -189,9 +189,9 @@ try:
 
             return embeddings[0]
 
-    embedding_map[
-        nlp_pb.EmbeddingType.SENTENCE_TRANSFORMERS
-    ] = SentenceTransformersModel
+    embedding_map[nlp_pb.EmbeddingType.SENTENCE_TRANSFORMERS] = (
+        SentenceTransformersModel
+    )
 
 except ModuleNotFoundError:
     log.info("'sentence-transformers' not installed.")
@@ -419,8 +419,7 @@ def vectors(
     texts: abc.Iterable[str],
     config: nlp_pb.NlpConfig,
     embedding_level: EmbeddingLevelSingle,
-) -> list[SpacyVector]:
-    ...
+) -> list[SpacyVector]: ...
 
 
 @t.overload
@@ -428,8 +427,7 @@ def vectors(
     texts: abc.Iterable[str],
     config: nlp_pb.NlpConfig,
     embedding_level: EmbeddingLevelMulti,
-) -> list[list[SpacyVector]]:
-    ...
+) -> list[list[SpacyVector]]: ...
 
 
 @t.overload
@@ -437,8 +435,7 @@ def vectors(
     texts: abc.Iterable[str],
     config: nlp_pb.NlpConfig,
     embedding_level: nlp_pb.EmbeddingLevel,
-) -> list[SpacyVector] | list[list[SpacyVector]]:
-    ...
+) -> list[SpacyVector] | list[list[SpacyVector]]: ...
 
 
 def vectors(
@@ -485,22 +482,19 @@ def vectors(
 @t.overload
 def vector(
     text: str, config: nlp_pb.NlpConfig, embedding_level: EmbeddingLevelSingle
-) -> SpacyVector:
-    ...
+) -> SpacyVector: ...
 
 
 @t.overload
 def vector(
     text: str, config: nlp_pb.NlpConfig, embedding_level: EmbeddingLevelMulti
-) -> list[SpacyVector]:
-    ...
+) -> list[SpacyVector]: ...
 
 
 @t.overload
 def vector(
     text: str, config: nlp_pb.NlpConfig, embedding_level: nlp_pb.EmbeddingLevel
-) -> SpacyVector | list[SpacyVector]:
-    ...
+) -> SpacyVector | list[SpacyVector]: ...
 
 
 def vector(
