@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.0-beta.2](https://github.com/recap-utr/nlp-service/compare/v2.0.0-beta.1...v2.0.0-beta.2) (2024-05-28)
+
+
+### Bug Fixes
+
+* use correct data types for serializable embedding model ([a97fe3a](https://github.com/recap-utr/nlp-service/commit/a97fe3a538994f6a6b702fb5a12d1345014ce2dd))
+
 ## [2.0.0-beta.1](https://github.com/recap-utr/nlp-service/compare/v1.4.10...v2.0.0-beta.1) (2023-12-04)
 
 
