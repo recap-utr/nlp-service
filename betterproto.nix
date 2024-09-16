@@ -1,41 +1,44 @@
 # https://github.com/NixOS/nixpkgs/blob/master/pkgs/development/python-modules/betterproto/default.nix
 {
+  buildPythonPackage,
   fetchFromGitHub,
   lib,
-  python,
-  buildPythonPackage,
+  pythonOlder,
   poetry-core,
   grpclib,
   python-dateutil,
-  typing-extensions,
   black,
   jinja2,
   isort,
-  pytestCheckHook,
-  pytest-asyncio,
-  pytest-cov,
-  pytest-mock,
+  python,
   pydantic,
-  protobuf,
-  cachelib,
+  pytest7CheckHook,
+  pytest-asyncio,
+  pytest-mock,
+  typing-extensions,
   tomlkit,
   grpcio-tools,
+  cachelib,
+  protobuf,
 }:
+
 buildPythonPackage rec {
   pname = "betterproto";
-  version = "master";
-  format = "pyproject";
+  version = "2.0.0b7";
+  pyproject = true;
+
+  disabled = pythonOlder "3.9";
 
   src = fetchFromGitHub {
     owner = "danielgtaylor";
     repo = "python-betterproto";
-    rev = "bd7de203e16e949666b2844b3dec1eb7c4ed523c";
-    hash = "sha256-ppVS8dfVSXBm7KGv1/um6ePK4pBln+RrizR9EXz40qo=";
+    rev = "refs/tags/v.${version}";
+    hash = "sha256-T7QSPH8MFa1hxJOhXc3ZMM62/FxHWjCJJ59IpeM41rI=";
   };
 
-  nativeBuildInputs = [poetry-core];
+  build-system = [ poetry-core ];
 
-  propagatedBuildInputs = [
+  dependencies = [
     grpclib
     python-dateutil
     typing-extensions
@@ -47,37 +50,45 @@ buildPythonPackage rec {
     isort
   ];
 
-  nativeCheckInputs =
-    [
-      pytestCheckHook
-      pytest-asyncio
-      pytest-cov
-      pytest-mock
-      pydantic
-      protobuf
-      cachelib
-      tomlkit
-      grpcio-tools
-    ]
-    ++ passthru.optional-dependencies.compiler;
+  nativeCheckInputs = [
+    grpcio-tools
+    pydantic
+    pytest-asyncio
+    pytest-mock
+    pytest7CheckHook
+    cachelib
+    tomlkit
+    protobuf
+  ] ++ lib.flatten (builtins.attrValues passthru.optional-dependencies);
+
+  pythonImportsCheck = [ "betterproto" ];
 
   # The tests require the generation of code before execution. This requires
   # the protoc-gen-python_betterproto script from the package to be on PATH.
   preCheck = ''
+    (($(ulimit -n) < 1024)) && ulimit -n 1024
     export PATH=$PATH:$out/bin
+    patchShebangs src/betterproto/plugin/main.py
     ${python.interpreter} -m tests.generate
   '';
 
-  pythonImportsCheck = ["betterproto"];
+  disabledTests = [
+    "test_pydantic_no_value"
+    # Test is flaky
+    "test_binary_compatibility"
+  ];
 
-  meta = {
-    description = "Clean, modern, Python 3.6+ code generator & library for Protobuf 3 and async gRPC";
+  meta = with lib; {
+    description = "Code generator & library for Protobuf 3 and async gRPC";
+    mainProgram = "protoc-gen-python_betterproto";
     longDescription = ''
       This project aims to provide an improved experience when using Protobuf /
       gRPC in a modern Python environment by making use of modern language
       features and generating readable, understandable, idiomatic Python code.
     '';
     homepage = "https://github.com/danielgtaylor/python-betterproto";
-    license = lib.licenses.mit;
+    changelog = "https://github.com/danielgtaylor/python-betterproto/blob/v.${version}/CHANGELOG.md";
+    license = licenses.mit;
+    maintainers = with maintainers; [ nikstur ];
   };
 }

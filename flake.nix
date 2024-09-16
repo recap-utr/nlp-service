@@ -38,7 +38,7 @@
         '';
         betterproto = python.pkgs.callPackage ./betterproto.nix {};
         betterprotoCompiler = betterproto.overridePythonAttrs (old: {
-          propagatedBuildInputs = old.propagatedBuildInputs ++ old.passthru.optional-dependencies.compiler;
+          dependencies = old.dependencies ++ old.passthru.optional-dependencies.compiler;
         });
       in {
         _module.args.pkgs = import nixpkgs {
