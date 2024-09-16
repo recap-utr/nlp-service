@@ -32,56 +32,47 @@ class SimilarityMethod(betterproto.Enum):
 
     COSINE = 1
     """
-    Cosine similarity.
-    [Wikipedia](https://en.wikipedia.org/wiki/Cosine_similarity).
+    Cosine similarity. [Wikipedia](https://en.wikipedia.org/wiki/Cosine_similarity).
     """
 
     DYNAMAX_JACCARD = 2
     """
-    DynaMax Jaccard. [Paper](https://arxiv.org/abs/1904.13264), [Code](https://
-    github.com/babylonhealth/fuzzymax/blob/master/similarity/fuzzy.py).
+    DynaMax Jaccard. [Paper](https://arxiv.org/abs/1904.13264), [Code](https://github.com/babylonhealth/fuzzymax/blob/master/similarity/fuzzy.py).
     """
 
     MAXPOOL_JACCARD = 3
     """
-    MaxPool Jaccard. [Paper](https://arxiv.org/abs/1904.13264), [Code](https://
-    github.com/babylonhealth/fuzzymax/blob/master/similarity/fuzzy.py).
+    MaxPool Jaccard. [Paper](https://arxiv.org/abs/1904.13264), [Code](https://github.com/babylonhealth/fuzzymax/blob/master/similarity/fuzzy.py).
     """
 
     DYNAMAX_DICE = 4
     """
-    DynaMax Dice. [Paper](https://arxiv.org/abs/1904.13264), [Code](https://git
-    hub.com/babylonhealth/fuzzymax/blob/master/similarity/fuzzy.py).
+    DynaMax Dice. [Paper](https://arxiv.org/abs/1904.13264), [Code](https://github.com/babylonhealth/fuzzymax/blob/master/similarity/fuzzy.py).
     """
 
     DYNAMAX_OTSUKA = 5
     """
-    DynaMax Otsuka. [Paper](https://arxiv.org/abs/1904.13264), [Code](https://g
-    ithub.com/babylonhealth/fuzzymax/blob/master/similarity/fuzzy.py).
+    DynaMax Otsuka. [Paper](https://arxiv.org/abs/1904.13264), [Code](https://github.com/babylonhealth/fuzzymax/blob/master/similarity/fuzzy.py).
     """
 
     WMD = 6
     """
-    Word Mover's Distance [Gensim Tutorial](https://radimrehurek.com/gensim/aut
-    o_examples/tutorials/run_wmd.html).
+    Word Mover's Distance [Gensim Tutorial](https://radimrehurek.com/gensim/auto_examples/tutorials/run_wmd.html).
     """
 
     EDIT = 7
     """
-    Levenshtein distance.
-    [Wikipedia](https://en.wikipedia.org/wiki/Levenshtein_distance).
+    Levenshtein distance. [Wikipedia](https://en.wikipedia.org/wiki/Levenshtein_distance).
     """
 
     JACCARD = 8
     """
-    Jaccard similarity.
-    [Wikipedia](https://en.wikipedia.org/wiki/Jaccard_index).
+    Jaccard similarity. [Wikipedia](https://en.wikipedia.org/wiki/Jaccard_index).
     """
 
     ANGULAR = 9
     """
-    Angular distance.
-    [Wikipedia](https://en.wikipedia.org/wiki/Angular_distance).
+    Angular distance. [Wikipedia](https://en.wikipedia.org/wiki/Angular_distance).
     """
 
 
@@ -105,20 +96,17 @@ class Pooling(betterproto.Enum):
 
     MEAN = 1
     """
-    Arithmetic mean of all elements.
-    [Wikipedia](https://en.wikipedia.org/wiki/Arithmetic_mean).
+    Arithmetic mean of all elements. [Wikipedia](https://en.wikipedia.org/wiki/Arithmetic_mean).
     """
 
     MAX = 2
     """
-    Maximum element of vector.
-    [Wikipedia](https://en.wikipedia.org/wiki/Maximum).
+    Maximum element of vector. [Wikipedia](https://en.wikipedia.org/wiki/Maximum).
     """
 
     MIN = 3
     """
-    Minimum element of vector.
-    [Wikipedia](https://en.wikipedia.org/wiki/Minimum).
+    Minimum element of vector. [Wikipedia](https://en.wikipedia.org/wiki/Minimum).
     """
 
     SUM = 4
@@ -132,20 +120,17 @@ class Pooling(betterproto.Enum):
 
     MEDIAN = 7
     """
-    Median element of vector.
-    [Wikipedia](https://en.wikipedia.org/wiki/Median).
+    Median element of vector. [Wikipedia](https://en.wikipedia.org/wiki/Median).
     """
 
     GMEAN = 8
     """
-    Geometirc mean of all elements.
-    [Wikipedia](https://en.wikipedia.org/wiki/Geometric_mean).
+    Geometirc mean of all elements. [Wikipedia](https://en.wikipedia.org/wiki/Geometric_mean).
     """
 
     HMEAN = 9
     """
-    Harmonic mean of all elements.
-    [Wikipedia](https://en.wikipedia.org/wiki/Harmonic_mean).
+    Harmonic mean of all elements. [Wikipedia](https://en.wikipedia.org/wiki/Harmonic_mean).
     """
 
 
@@ -161,14 +146,12 @@ class EmbeddingType(betterproto.Enum):
 
     SENTENCE_TRANSFORMERS = 3
     """
-    [UKPLab Sentence
-    Transformers](https://www.sbert.net/docs/pretrained_models.html)
+    [UKPLab Sentence Transformers](https://www.sbert.net/docs/pretrained_models.html)
     """
 
     TENSORFLOW_HUB = 4
     """
-    Tensorflow Hub. Example: [Universal Sentence
-    Encoder](https://tfhub.dev/google/universal-sentence-encoder/4).
+    Tensorflow Hub. Example: [Universal Sentence Encoder](https://tfhub.dev/google/universal-sentence-encoder/4).
     """
 
     OPENAI = 5
@@ -184,23 +167,21 @@ class NlpConfig(betterproto.Message):
     language: str = betterproto.string_field(1)
     """
     Any language supported by spacy (e.g., `en`).
-    [Reference](https://spacy.io/usage/models#languages).
+     [Reference](https://spacy.io/usage/models#languages).
     """
 
     spacy_model: str = betterproto.string_field(2)
     """
-    Name of the trained spacy pipeline (e.g., `en_core_web_lg`). If empty, a
-    blank spacy model will be used (e.g., if you only need embeddings and
-    provide custom `embedding_models`. [Example: English
-    models](https://spacy.io/models/en).
+    Name of the trained spacy pipeline (e.g., `en_core_web_lg`).
+     If empty, a blank spacy model will be used (e.g., if you only need embeddings and provide custom `embedding_models`.
+     [Example: English models](https://spacy.io/models/en).
     """
 
     embedding_models: List["EmbeddingModel"] = betterproto.message_field(3)
     """
-    List of embeddings to use for computing word/sentence vectors. If given,
-    these embeddings will **override** the embeddings of the specified
-    `spacy_model`. Multiple models are concatenated to each other, increasing
-    the length of the resulting vector.
+    List of embeddings to use for computing word/sentence vectors.
+     If given, these embeddings will **override** the embeddings of the specified `spacy_model`.
+     Multiple models are concatenated to each other, increasing the length of the resulting vector.
     """
 
     similarity_method: "SimilarityMethod" = betterproto.enum_field(4)
@@ -255,25 +236,18 @@ class DocBinRequest(betterproto.Message):
 
     attributes: Optional["Strings"] = betterproto.message_field(3, optional=True)
     """
-    Attributes that shall be included in the DocBin object. Defaults to
-    `("ORTH", "TAG", "HEAD", "DEP", "ENT_IOB", "ENT_TYPE", "ENT_KB_ID",
-    "LEMMA", "MORPH", "POS")`. Possible values: `("IS_ALPHA", "IS_ASCII",
-    "IS_DIGIT", "IS_LOWER", "IS_PUNCT", "IS_SPACE", "IS_TITLE", "IS_UPPER",
-    "LIKE_URL", "LIKE_NUM", "LIKE_EMAIL", "IS_STOP", "IS_OOV_DEPRECATED",
-    "IS_BRACKET", "IS_QUOTE", "IS_LEFT_PUNCT", "IS_RIGHT_PUNCT", "IS_CURRENCY",
-    "ID", "ORTH", "LOWER", "NORM", "SHAPE", "PREFIX", "SUFFIX", "LENGTH",
-    "CLUSTER", "LEMMA", "POS", "TAG", "DEP", "ENT_IOB", "ENT_TYPE", "ENT_ID",
-    "ENT_KB_ID", "HEAD", "SENT_START", "SENT_END", "SPACY", "PROB", "LANG",
-    "MORPH", "IDX")`. [Documentation](https://spacy.io/api/token#attributes).
+    Attributes that shall be included in the DocBin object.
+     Defaults to `("ORTH", "TAG", "HEAD", "DEP", "ENT_IOB", "ENT_TYPE", "ENT_KB_ID", "LEMMA", "MORPH", "POS")`.
+     Possible values: `("IS_ALPHA", "IS_ASCII", "IS_DIGIT", "IS_LOWER", "IS_PUNCT", "IS_SPACE", "IS_TITLE", "IS_UPPER", "LIKE_URL", "LIKE_NUM", "LIKE_EMAIL", "IS_STOP", "IS_OOV_DEPRECATED", "IS_BRACKET", "IS_QUOTE", "IS_LEFT_PUNCT", "IS_RIGHT_PUNCT", "IS_CURRENCY", "ID", "ORTH", "LOWER", "NORM", "SHAPE", "PREFIX", "SUFFIX", "LENGTH", "CLUSTER", "LEMMA", "POS", "TAG", "DEP", "ENT_IOB", "ENT_TYPE", "ENT_ID", "ENT_KB_ID", "HEAD", "SENT_START", "SENT_END", "SPACY", "PROB", "LANG", "MORPH", "IDX")`.
+     [Documentation](https://spacy.io/api/token#attributes).
     """
 
     enabled_pipes: "Strings" = betterproto.message_field(4, group="pipes")
     disabled_pipes: "Strings" = betterproto.message_field(5, group="pipes")
     embedding_levels: List["EmbeddingLevel"] = betterproto.enum_field(6)
     """
-    List of vectors that shall be saved in the `DocBin` object. The computation
-    is time-consuming, so you should only specify the embeddings you actually
-    use!
+    List of vectors that shall be saved in the `DocBin` object.
+     The computation is time-consuming, so you should only specify the embeddings you actually use!
     """
 
     extras: "betterproto_lib_google_protobuf.Struct" = betterproto.message_field(15)
@@ -299,8 +273,8 @@ class VectorsRequest(betterproto.Message):
 
     embedding_levels: List["EmbeddingLevel"] = betterproto.enum_field(3)
     """
-    List of vectors that shall be returned. The computation is time-consuming,
-    so you should only specify the embeddings you actually use!
+    List of vectors that shall be returned.
+     The computation is time-consuming, so you should only specify the embeddings you actually use!
     """
 
     extras: "betterproto_lib_google_protobuf.Struct" = betterproto.message_field(15)
@@ -319,8 +293,7 @@ class VectorsResponse(betterproto.Message):
 @dataclass(eq=False, repr=False)
 class VectorResponse(betterproto.Message):
     """
-    Container object that includes vectors for all levels specified in
-    `embedding_levels`.
+    Container object that includes vectors for all levels specified in `embedding_levels`.
     """
 
     document: "Vector" = betterproto.message_field(1)
@@ -351,15 +324,13 @@ class EmbeddingModel(betterproto.Message):
 
     model_type: "EmbeddingType" = betterproto.enum_field(1)
     """
-    Each embedding has to be implemented, thus this enum is used to select the
-    correct one.
+    Each embedding has to be implemented, thus this enum is used to select the correct one.
     """
 
     model_name: str = betterproto.string_field(2)
     """
-    You have to specify the name of the model that should be used by the
-    selected impelemtation (i.e., `model_type`). We provide links to exemplary
-    models for each implementation in the documentation of `EmbeddingType`.
+    You have to specify the name of the model that should be used by the selected impelemtation (i.e., `model_type`).
+     We provide links to exemplary models for each implementation in the documentation of `EmbeddingType`.
     """
 
     pooling_type: "Pooling" = betterproto.enum_field(3, group="pooling")
@@ -367,12 +338,11 @@ class EmbeddingModel(betterproto.Message):
 
     pmean: float = betterproto.double_field(4, group="pooling")
     """
-    Power mean (or generalized mean). This method allows you to alter the
-    computation of the mean representation. Special cases include arithmetic
-    mean (p = 1), geometric mean (p = 0), harmonic mean (p = -1), minimum (p =
-    -∞), maximum (p = ∞).
-    [Wikipedia](https://en.wikipedia.org/wiki/Generalized_mean).
-    [Paper](https://arxiv.org/abs/1803.01400).
+    Power mean (or generalized mean).
+     This method allows you to alter the computation of the mean representation.
+     Special cases include arithmetic mean (p = 1), geometric mean (p = 0), harmonic mean (p = -1), minimum (p = -∞), maximum (p = ∞).
+     [Wikipedia](https://en.wikipedia.org/wiki/Generalized_mean).
+     [Paper](https://arxiv.org/abs/1803.01400).
     """
 
 
@@ -430,6 +400,7 @@ class NlpServiceStub(betterproto.ServiceStub):
 
 
 class NlpServiceBase(ServiceBase):
+
     async def vectors(self, vectors_request: "VectorsRequest") -> "VectorsResponse":
         raise grpclib.GRPCError(grpclib.const.Status.UNIMPLEMENTED)
 
