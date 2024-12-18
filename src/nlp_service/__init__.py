@@ -1,5 +1,13 @@
 import logging
 
+from arg_services.nlp.v1.nlp_pb2 import (
+    EmbeddingModel,
+    EmbeddingType,
+    NlpConfig,
+    Pooling,
+    SimilarityMethod,
+)
+
 from . import client
 from .lib import (
     build_concat_embed_func,
@@ -12,7 +20,6 @@ from .lib import (
     vector,
     vectors,
 )
-from .nlp_pb import EmbeddingModel, EmbeddingType, NlpConfig, Pooling, SimilarityMethod
 
 __all__ = (
     "client",

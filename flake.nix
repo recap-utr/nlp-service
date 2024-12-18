@@ -56,10 +56,6 @@
             export LD_PRELOAD=$(${pkgs.busybox}/bin/find /lib/x86_64-linux-gnu -name "libcuda.so.*" -type f 2>/dev/null)
             exec ${lib.getExe config.packages.default} "$@"
           '';
-          betterproto = pkgs.python3.pkgs.callPackage ./betterproto.nix { };
-          betterproto-compiler = betterproto.overridePythonAttrs (old: {
-            dependencies = old.dependencies ++ old.passthru.optional-dependencies.compiler;
-          });
           pythonSet = pkgs.callPackage ./default.nix {
             inherit (inputs) uv2nix pyproject-nix pyproject-build-systems;
           };
@@ -83,8 +79,7 @@
             exec ${lib.getExe config.packages.default} "$@"
           '';
           checks = {
-            inherit (config.packages) betterproto nlp-service;
-            docker = config.packages.docker.passthru.stream;
+            inherit (config.packages) nlp-service docker;
           };
           treefmt = {
             projectRootFile = "flake.nix";
@@ -97,7 +92,7 @@
           packages = {
             default = config.packages.nlp-service;
             nlp-service = pythonSet.mkApp "default";
-            docker = pkgs.dockerTools.buildLayeredImage {
+            docker = pkgs.dockerTools.streamLayeredImage {
               name = "nlp-service";
               tag = "latest";
               created = "now";
@@ -114,20 +109,6 @@
                 python3
               ];
             };
-            betterproto = pkgs.python3.pkgs.toPythonApplication betterproto-compiler;
-            buf-generate = pkgs.writeShellApplication {
-              name = "buf-generate";
-              runtimeInputs = [ config.packages.betterproto ];
-              text = ''
-                TMPDIR="$(mktemp -d)"
-                ${lib.getExe pkgs.buf} generate -o "$TMPDIR"
-                {
-                  echo "# type: ignore"
-                  cat "$TMPDIR/gen/arg_services/nlp/v1/__init__.py"
-                } > ./src/nlp_service/nlp_pb.py
-                rm -rf "$TMPDIR"
-              '';
-            };
           };
           legacyPackages.docker-manifest = flocken.legacyPackages.${system}.mkDockerManifest {
             github = {
@@ -135,12 +116,11 @@
               token = "$GH_TOKEN";
             };
             version = builtins.getEnv "VERSION";
-            images = with self.packages; [ x86_64-linux.docker ];
+            imageStreams = with self.packages; [ x86_64-linux.docker ];
           };
           devShells.default = pkgs.mkShell {
             packages = [
               pkgs.uv
-              config.packages.buf-generate
               config.treefmt.build.wrapper
             ];
             nativeBuildInputs = with pkgs; [ zlib ];

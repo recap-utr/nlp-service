@@ -1,9 +1,0 @@
-version: v2
-managed:
-  enabled: true
-clean: true
-inputs:
-  - module: buf.build/recap/arg-services:v1.5.1
-plugins:
-  - local: protoc-gen-python_betterproto
-    out: gen

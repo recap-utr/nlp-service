@@ -1,9 +1,8 @@
 import numpy as np
 import spacy
+from arg_services.nlp.v1.nlp_pb2 import VectorResponse
 from spacy.language import Language as SpacyLanguage
 from spacy.tokens import Doc, DocBin, Span, Token
-
-from .nlp_pb import VectorResponse
 
 Doc.set_extension("vector", default=None)
 Span.set_extension("vector", default=None)

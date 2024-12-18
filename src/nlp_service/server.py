@@ -1,86 +1,86 @@
-import asyncio
 from typing import cast
 
-import betterproto
-from grpclib.server import Server
-from grpclib.utils import graceful_exit
+import arg_services
+import grpc
+from arg_services.nlp.v1 import nlp_pb2, nlp_pb2_grpc
 from spacy.tokens import DocBin
 from typer import Typer
 
-from . import lib, nlp_pb
+from . import lib
 
 
-class NlpService(nlp_pb.NlpServiceBase):
-    async def doc_bin(
-        self, doc_bin_request: nlp_pb.DocBinRequest
-    ) -> nlp_pb.DocBinResponse:
+class NlpService(nlp_pb2_grpc.NlpServiceServicer):
+    def DocBin(
+        self, request: nlp_pb2.DocBinRequest, context: grpc.ServicerContext
+    ) -> nlp_pb2.DocBinResponse:
         pipes_selection: lib.PipeSelection | None = None
 
-        if betterproto.which_one_of(doc_bin_request, "pipes") == "enabled_pipes":
-            pipes_selection = {"enable": tuple(doc_bin_request.enabled_pipes.values)}
-        elif betterproto.which_one_of(doc_bin_request, "pipes") == "disabled_pipes":
-            pipes_selection = {"disable": tuple(doc_bin_request.disabled_pipes.values)}
+        if request.WhichOneof("pipes") == "enabled_pipes":
+            pipes_selection = {"enable": tuple(request.enabled_pipes.values)}
+        elif request.WhichOneof("pipes") == "disabled_pipes":
+            pipes_selection = {"disable": tuple(request.disabled_pipes.values)}
 
         vectorize = (
-            nlp_pb.EmbeddingLevel.DOCUMENT in doc_bin_request.embedding_levels
-            or nlp_pb.EmbeddingLevel.UNSPECIFIED in doc_bin_request.embedding_levels
+            nlp_pb2.EmbeddingLevel.EMBEDDING_LEVEL_DOCUMENT in request.embedding_levels
+            or nlp_pb2.EmbeddingLevel.EMBEDDING_LEVEL_UNSPECIFIED
+            in request.embedding_levels
         )
 
         docs = lib.docs(
-            doc_bin_request.texts,
-            doc_bin_request.config,
+            request.texts,
+            request.config,
             pipes_selection,
             vectorize,
         )
 
-        if doc_bin_request.attributes is not None:
-            return nlp_pb.DocBinResponse(
+        if request.attributes.values:
+            return nlp_pb2.DocBinResponse(
                 docbin=DocBin(
-                    doc_bin_request.attributes.values, docs=docs, store_user_data=True
+                    request.attributes.values, docs=docs, store_user_data=True
                 ).to_bytes()
             )
 
-        return nlp_pb.DocBinResponse(
+        return nlp_pb2.DocBinResponse(
             docbin=DocBin(docs=docs, store_user_data=True).to_bytes()
         )
 
-    async def vectors(
-        self, vectors_request: nlp_pb.VectorsRequest
-    ) -> nlp_pb.VectorsResponse:
-        return nlp_pb.VectorsResponse(
+    async def Vectors(
+        self, request: nlp_pb2.VectorsRequest, context: grpc.ServicerContext
+    ) -> nlp_pb2.VectorsResponse:
+        return nlp_pb2.VectorsResponse(
             vectors=[
-                nlp_pb.VectorResponse(document=nlp_pb.Vector(vector=vector.tolist()))
-                for vector in lib.vectors(vectors_request.texts, vectors_request.config)
+                nlp_pb2.VectorResponse(document=nlp_pb2.Vector(vector=vector.tolist()))
+                for vector in lib.vectors(request.texts, request.config)
             ]
         )
 
-    async def similarities(
-        self, similarities_request: nlp_pb.SimilaritiesRequest
-    ) -> nlp_pb.SimilaritiesResponse:
-        return nlp_pb.SimilaritiesResponse(
+    async def Similarities(
+        self, request: nlp_pb2.SimilaritiesRequest, context: grpc.ServicerContext
+    ) -> nlp_pb2.SimilaritiesResponse:
+        return nlp_pb2.SimilaritiesResponse(
             similarities=cast(
                 list[float],
                 lib.similarities(
-                    [(x.text1, x.text2) for x in similarities_request.text_tuples],
-                    similarities_request.config,
+                    [(x.text1, x.text2) for x in request.text_tuples],
+                    request.config,
                 ),
             )
         )
 
 
-async def serve(host: str, port: int):
-    server = Server([NlpService()])
-
-    with graceful_exit([server]):
-        await server.start(host, port)
-        print(f"Serving on {host}:{port}")
-        await server.wait_closed()
-
-
 app = Typer()
 
 
+def add_services(server: grpc.Server):
+    """Add the services to the grpc server."""
+
+    nlp_pb2_grpc.add_NlpServiceServicer_to_server(NlpService(), server)
+
+
 @app.command()
-def run(host: str = "127.0.0.1", port: int = 50100):
-    """Main entry point for the server."""
-    asyncio.run(serve(host, port))
+def main(host: str = "127.0.0.1", port: int = 50100):
+    arg_services.serve(
+        f"{host}:{port}",
+        add_services,
+        [arg_services.full_service_name(nlp_pb2, "NlpService")],
+    )

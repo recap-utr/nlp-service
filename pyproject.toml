@@ -21,13 +21,13 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 dependencies = [
-    "betterproto>=2.0.0b7,<3",
+    "arg-services>=1,<2",
     "cbrkit[nlp,llm,transformers]>=0,<1",
     "typer>=0.9,<1",
 ]
 
 [project.scripts]
-nlp-service = "nlp_service.server:run"
+nlp-service = "nlp_service.server:main"
 
 [project.urls]
 Repository = "https://github.com/recap-utr/nlp-service"
