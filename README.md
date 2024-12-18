@@ -21,7 +21,7 @@ We are using `nix` and `poetry` to manage the dependencies and provide a ready-t
 The container caches the downloaded models, so you should not pass `--rm` to `docker run`.
 
 ```sh
-docker run ghcr.io/recap-utr/nlp-service:latest "0.0.0.0:50100"
+docker run -it ghcr.io/recap-utr/nlp-service:latest "0.0.0.0:50100"
 ```
 
 ### Nix (advanced)

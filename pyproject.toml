@@ -1,40 +1,43 @@
-[tool.poetry]
+[project]
 name = "nlp-service"
 version = "2.0.0b2"
 description = "Microservice for NLP tasks using gRPC"
-authors = ["Mirko Lenz <info@mirko-lenz.de>"]
-license = "MIT"
+authors = [{ name = "Mirko Lenz", email = "mirko@mirkolenz.com" }]
 readme = "README.md"
-homepage = "http://recap.uni-trier.de"
-repository = "https://github.com/recap-utr/nlp-service"
-packages = [{ include = "nlp_service" }]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
+requires-python = ">=3.12"
+dependencies = [
+    "betterproto>=2.0.0b7,<3",
+    "cbrkit[nlp,llm,transformers]>=0,<1",
+    "typer>=0.9,<1",
+]
 
-[tool.poetry.scripts]
-nlp-service = "nlp_service.cli:app"
+[project.scripts]
+nlp-service = "nlp_service.server:run"
 
-[tool.poetry.dependencies]
-python = ">=3.10, <3.13"
-numpy = "^1.24"
-scipy = "^1.10"
-spacy = "^3.7"
-nltk = "^3.8"
-nptyping = "^2.5"
-mashumaro = "^3.11"
-typer = "^0.9"
-rich = "^13.7"
-openai = "^1.3"
-python-Levenshtein = "^0.23"
-betterproto = { version = "^2.0.0b7", allow-prereleases = true }
-gensim = { version = "^4.3", optional = true }
-sentence-transformers = { version = "^2.2", optional = true }
-torch = { version = "^2.1.1", optional = true }
-transformers = { version = "^4.34", optional = true }
-
-[tool.poetry.extras]
-gensim = ["gensim"]
-transformers = ["transformers", "sentence-transformers", "torch"]
-all = ["gensim", "transformers", "sentence-transformers", "torch"]
+[project.urls]
+Repository = "https://github.com/recap-utr/nlp-service"
+Documentation = "https://recap-utr.github.io/nlp-service/"
+Issues = "https://github.com/recap-utr/nlp-service/issues"
+Changelog = "https://github.com/recap-utr/nlp-service/releases"
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.uv.sources]
+cbrkit = { path = "../../wi2trier/cbrkit", editable = true }
