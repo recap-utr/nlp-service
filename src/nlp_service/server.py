@@ -6,14 +6,14 @@ from arg_services.nlp.v1 import nlp_pb2, nlp_pb2_grpc
 from spacy.tokens import DocBin
 from typer import Typer
 
-from . import lib
+from . import apply
 
 
 class NlpService(nlp_pb2_grpc.NlpServiceServicer):
     def DocBin(
         self, request: nlp_pb2.DocBinRequest, context: grpc.ServicerContext
     ) -> nlp_pb2.DocBinResponse:
-        pipes_selection: lib.PipeSelection | None = None
+        pipes_selection: apply.PipeSelection | None = None
 
         if request.WhichOneof("pipes") == "enabled_pipes":
             pipes_selection = {"enable": tuple(request.enabled_pipes.values)}
@@ -26,7 +26,7 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
             in request.embedding_levels
         )
 
-        docs = lib.docs(
+        docs = apply.docs(
             request.texts,
             request.config,
             pipes_selection,
@@ -50,7 +50,7 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
         return nlp_pb2.VectorsResponse(
             vectors=[
                 nlp_pb2.VectorResponse(document=nlp_pb2.Vector(vector=vector.tolist()))
-                for vector in lib.vectors(request.texts, request.config)
+                for vector in apply.vectors(request.texts, request.config)
             ]
         )
 
@@ -60,7 +60,7 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
         return nlp_pb2.SimilaritiesResponse(
             similarities=cast(
                 list[float],
-                lib.similarities(
+                apply.similarities(
                     [(x.text1, x.text2) for x in request.text_tuples],
                     request.config,
                 ),
