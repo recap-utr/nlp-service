@@ -1,19 +1,17 @@
-from typing import cast
-
 import arg_services
 import grpc
 from arg_services.nlp.v1 import nlp_pb2, nlp_pb2_grpc
 from spacy.tokens import DocBin
 from typer import Typer
 
-from . import apply
+from .lib import Nlp, PipeSelection
 
 
 class NlpService(nlp_pb2_grpc.NlpServiceServicer):
     def DocBin(
         self, request: nlp_pb2.DocBinRequest, context: grpc.ServicerContext
     ) -> nlp_pb2.DocBinResponse:
-        pipes_selection: apply.PipeSelection | None = None
+        pipes_selection: PipeSelection | None = None
 
         if request.WhichOneof("pipes") == "enabled_pipes":
             pipes_selection = {"enable": tuple(request.enabled_pipes.values)}
@@ -26,9 +24,9 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
             in request.embedding_levels
         )
 
-        docs = apply.docs(
+        nlp = Nlp(request.config)
+        docs = nlp.doc(
             request.texts,
-            request.config,
             pipes_selection,
             vectorize,
         )
@@ -47,23 +45,21 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
     async def Vectors(
         self, request: nlp_pb2.VectorsRequest, context: grpc.ServicerContext
     ) -> nlp_pb2.VectorsResponse:
+        nlp = Nlp(request.config)
         return nlp_pb2.VectorsResponse(
             vectors=[
                 nlp_pb2.VectorResponse(document=nlp_pb2.Vector(vector=vector.tolist()))
-                for vector in apply.vectors(request.texts, request.config)
+                for vector in nlp.embed(request.texts)
             ]
         )
 
     async def Similarities(
         self, request: nlp_pb2.SimilaritiesRequest, context: grpc.ServicerContext
     ) -> nlp_pb2.SimilaritiesResponse:
+        nlp = Nlp(request.config)
         return nlp_pb2.SimilaritiesResponse(
-            similarities=cast(
-                list[float],
-                apply.similarities(
-                    [(x.text1, x.text2) for x in request.text_tuples],
-                    request.config,
-                ),
+            similarities=nlp.similarity(
+                [(x.text1, x.text2) for x in request.text_tuples]
             )
         )
 

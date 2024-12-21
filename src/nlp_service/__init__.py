@@ -1,20 +1,24 @@
 import logging
 
-from arg_services.nlp.v1 import nlp_pb2 as model
-from torch.cuda import is_available as is_cuda_available
+from arg_services.nlp.v1.nlp_pb2 import (
+    EmbeddingModel,
+    EmbeddingType,
+    NlpConfig,
+    SimilarityMethod,
+)
 
-from . import apply, build, client
+from . import client
+from .lib import Nlp, PipeSelection
 
 __all__ = (
-    "apply",
-    "build",
+    "Nlp",
+    "PipeSelection",
+    "NlpConfig",
+    "SimilarityMethod",
+    "EmbeddingType",
+    "EmbeddingModel",
     "client",
-    "model",
 )
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
-
-torch_device = "cuda" if is_cuda_available() else "cpu"
-
-logger.info(f"Using torch device '{torch_device}'.")
