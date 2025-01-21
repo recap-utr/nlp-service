@@ -27,6 +27,7 @@ def embed_provider(
     model_name: str,
     cache_dir: Path | None,
     init_func: Callable[[str], EmbedFunc] | None,
+    autodump: bool,
 ) -> EmbedFunc:
     if init_func is not None:
         embed_func = init_func(model_name)
@@ -55,7 +56,9 @@ def embed_provider(
         )
         cache_filename = f"{model_type_label}_{model_name}.npz"
 
-        return cbrkit.sim.embed.cache(embed_func, cache_dir / cache_filename)
+        return cbrkit.sim.embed.cache(
+            embed_func, cache_dir / cache_filename, autodump, lazy=True
+        )
 
     return cbrkit.sim.embed.cache(embed_func)
 
@@ -64,6 +67,7 @@ def embed_provider(
 class Nlp:
     config: nlp_pb2.NlpConfig
     cache_dir: Path | None = None
+    autodump: bool = False
     provider_init: Mapping[nlp_pb2.EmbeddingType, Callable[[str], EmbedFunc]] = field(
         default_factory=dict
     )
@@ -90,6 +94,7 @@ class Nlp:
                 x.model_name,
                 self.cache_dir,
                 self.provider_init.get(x.model_type),
+                self.autodump,
             )
             for x in self.config.embedding_models
         ]
