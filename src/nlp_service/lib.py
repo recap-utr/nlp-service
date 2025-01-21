@@ -25,7 +25,7 @@ class PipeSelection(TypedDict, total=False):
 def embed_provider(
     model_type: nlp_pb2.EmbeddingType,
     model_name: str,
-    cache_folder: Path | None,
+    cache_dir: Path | None,
     init_func: Callable[[str], EmbedFunc] | None,
 ) -> EmbedFunc:
     if init_func is not None:
@@ -47,7 +47,7 @@ def embed_provider(
             case _:
                 raise ValueError("Unknown embedding model type.")
 
-    if cache_folder:
+    if cache_dir:
         model_type_label = (
             nlp_pb2.EmbeddingType.Name(model_type)
             .removeprefix("EMBEDDING_TYPE_")
@@ -55,7 +55,7 @@ def embed_provider(
         )
         cache_filename = f"{model_type_label}_{model_name}.npz"
 
-        return cbrkit.sim.embed.cache(embed_func, cache_folder / cache_filename)
+        return cbrkit.sim.embed.cache(embed_func, cache_dir / cache_filename)
 
     return cbrkit.sim.embed.cache(embed_func)
 
@@ -63,7 +63,7 @@ def embed_provider(
 @dataclass(slots=True, frozen=True)
 class Nlp:
     config: nlp_pb2.NlpConfig
-    cache_folder: Path | None = None
+    cache_dir: Path | None = None
     provider_init: Mapping[nlp_pb2.EmbeddingType, Callable[[str], EmbedFunc]] = field(
         default_factory=dict
     )
@@ -88,7 +88,7 @@ class Nlp:
             embed_provider(
                 x.model_type,
                 x.model_name,
-                self.cache_folder,
+                self.cache_dir,
                 self.provider_init.get(x.model_type),
             )
             for x in self.config.embedding_models
