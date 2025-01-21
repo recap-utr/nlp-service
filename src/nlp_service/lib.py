@@ -8,7 +8,6 @@ from typing import Any, TypedDict
 import cbrkit
 import spacy
 from arg_services.nlp.v1 import nlp_pb2
-from sentence_transformers import SentenceTransformer
 from spacy.tokens import Doc
 
 logger = logging.getLogger(__name__)
@@ -132,27 +131,6 @@ class Nlp:
 
     @property
     def retrieval(self) -> cbrkit.typing.RetrieverFunc[Any, str, float]:
-        if (
-            self.config.similarity_method
-            in (
-                nlp_pb2.SimilarityMethod.SIMILARITY_METHOD_COSINE,
-                nlp_pb2.SimilarityMethod.SIMILARITY_METHOD_UNSPECIFIED,
-            )
-            and len(self.config.embedding_models) != 1
-        ):
-            embedding_model = self.config.embedding_models[0]
-
-            match embedding_model.model_type:
-                case nlp_pb2.EmbeddingType.EMBEDDING_TYPE_SENTENCE_TRANSFORMERS:
-                    # We do NOT use torch_device (cpu/cuda) and instead let sbert auto-detect it
-                    return cbrkit.retrieval.sentence_transformers(
-                        SentenceTransformer(embedding_model.model_name)
-                    )
-                case nlp_pb2.EmbeddingType.EMBEDDING_TYPE_COHERE:
-                    return cbrkit.retrieval.cohere(embedding_model.model_name)
-                case nlp_pb2.EmbeddingType.EMBEDDING_TYPE_VOYAGEAI:
-                    return cbrkit.retrieval.voyageai(embedding_model.model_name)
-
         return self.retrieval_init(self.similarity)
 
     def doc(
