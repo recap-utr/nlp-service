@@ -12,8 +12,7 @@ from .lib import Nlp, PipeSelection
 
 @dataclass(frozen=True, slots=True)
 class NlpService(nlp_pb2_grpc.NlpServiceServicer):
-    cache_dir: Path | None
-    autodump: bool
+    nlp: Nlp
 
     def DocBin(
         self, request: nlp_pb2.DocBinRequest, context: grpc.ServicerContext
@@ -31,8 +30,8 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
             in request.embedding_levels
         )
 
-        nlp = Nlp(request.config, self.cache_dir, self.autodump)
-        docs = nlp.doc(
+        docs = self.nlp.doc(
+            request.config,
             request.texts,
             pipes_selection,
             vectorize,
@@ -52,22 +51,20 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
     async def Vectors(
         self, request: nlp_pb2.VectorsRequest, context: grpc.ServicerContext
     ) -> nlp_pb2.VectorsResponse:
-        nlp = Nlp(request.config, self.cache_dir, self.autodump)
+        embed_func = self.nlp.embed_func(request.config)
         return nlp_pb2.VectorsResponse(
             vectors=[
                 nlp_pb2.VectorResponse(document=nlp_pb2.Vector(vector=vector.tolist()))
-                for vector in nlp.embed(request.texts)
+                for vector in embed_func(request.texts)
             ]
         )
 
     async def Similarities(
         self, request: nlp_pb2.SimilaritiesRequest, context: grpc.ServicerContext
     ) -> nlp_pb2.SimilaritiesResponse:
-        nlp = Nlp(request.config, self.cache_dir, self.autodump)
+        sim_func = self.nlp.sim_func(request.config)
         return nlp_pb2.SimilaritiesResponse(
-            similarities=nlp.similarity(
-                [(x.text1, x.text2) for x in request.text_tuples]
-            )
+            similarities=sim_func([(x.text1, x.text2) for x in request.text_tuples])
         )
 
 
@@ -76,15 +73,12 @@ app = Typer()
 
 @dataclass(frozen=True, slots=True)
 class ServiceAdder:
-    cache_dir: Path | None
-    autodump: bool
+    nlp: Nlp
 
     def __call__(self, server: grpc.Server):
         """Add the services to the grpc server."""
 
-        nlp_pb2_grpc.add_NlpServiceServicer_to_server(
-            NlpService(self.cache_dir, self.autodump), server
-        )
+        nlp_pb2_grpc.add_NlpServiceServicer_to_server(NlpService(self.nlp), server)
 
 
 @app.command()
@@ -96,6 +90,6 @@ def main(
 ):
     arg_services.serve(
         f"{host}:{port}",
-        ServiceAdder(cache_dir, autodump),
+        ServiceAdder(Nlp(cache_dir, autodump)),
         [arg_services.full_service_name(nlp_pb2, "NlpService")],
     )
