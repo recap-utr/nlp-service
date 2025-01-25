@@ -87,7 +87,7 @@ class Nlp:
                 cache_path = None
 
             self.embed_provider_cache[key] = cbrkit.sim.embed.cache(
-                embed_func, cache_path, self.autodump, lazy=True
+                embed_func, cache_path, self.autodump
             )
 
         return self.embed_provider_cache[key]
