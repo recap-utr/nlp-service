@@ -20,30 +20,33 @@ let
         autoPatchelfIgnoreMissingDeps = true;
       })
     );
+  packageOverlay =
+    final: prev:
+    lib.mapAttrs (name: value: prev.${name}.overrideAttrs value) {
+      cbrkit = old: {
+        meta = (old.meta or { }) // {
+          mainProgram = "nlp-service";
+          maintainers = with lib.maintainers; [ mirkolenz ];
+          license = lib.licenses.mit;
+          homepage = "https://github.com/recap-utr/nlp-service";
+          description = "Microservice for NLP tasks using gRPC";
+          platforms = with lib.platforms; darwin ++ linux;
+        };
+      };
+    };
   baseSet = callPackage pyproject-nix.build.packages {
     python = python3;
   };
+in
+{
+  inherit workspace;
+  inherit (callPackage pyproject-nix.build.util { }) mkApplication;
   pythonSet = baseSet.overrideScope (
     lib.composeManyExtensions [
       pyproject-build-systems.overlays.default
       projectOverlay
       cudaOverlay
+      packageOverlay
     ]
   );
-  addMeta =
-    drv:
-    drv.overrideAttrs (old: {
-      meta = (old.meta or { }) // {
-        mainProgram = "nlp-service";
-        maintainers = with lib.maintainers; [ mirkolenz ];
-        license = lib.licenses.mit;
-        homepage = "https://github.com/recap-utr/nlp-service";
-        description = "Microservice for NLP tasks using gRPC";
-        platforms = with lib.platforms; darwin ++ linux;
-      };
-    });
-in
-pythonSet
-// {
-  mkApp = depsName: addMeta (pythonSet.mkVirtualEnv "nlp-service-env" workspace.deps.${depsName});
 }

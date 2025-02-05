@@ -64,13 +64,14 @@
           ...
         }:
         let
-          entrypoint = pkgs.writeShellScriptBin "entrypoint" ''
-            export LD_PRELOAD=$(${pkgs.busybox}/bin/find /lib/x86_64-linux-gnu -name "libcuda.so.*" -type f 2>/dev/null)
-            exec ${lib.getExe config.packages.default} "$@"
-          '';
-          pythonSet = pkgs.callPackage ./default.nix {
-            inherit (inputs) uv2nix pyproject-nix pyproject-build-systems;
-          };
+          inherit
+            (pkgs.callPackage ./default.nix {
+              inherit (inputs) uv2nix pyproject-nix pyproject-build-systems;
+            })
+            pythonSet
+            mkApplication
+            workspace
+            ;
         in
         {
           _module.args.pkgs = import nixpkgs {
@@ -86,10 +87,6 @@
               }
             );
           };
-          apps.default.program = pkgs.writeShellScriptBin "nlp-service" ''
-            export LD_PRELOAD=/run/opengl-driver/lib/libcuda.so.1
-            exec ${lib.getExe config.packages.default} "$@"
-          '';
           checks = {
             inherit (config.packages) nlp-service docker;
           };
@@ -102,14 +99,34 @@
             };
           };
           packages = {
-            default = config.packages.nlp-service;
-            nlp-service = pythonSet.mkApp "default";
+            default = config.packages.nlp-service-wrapped;
+            nlp-service = mkApplication {
+              venv = pythonSet.mkVirtualEnv "nlp-service-env" workspace.deps.optionals;
+              package = pythonSet.nlp-service;
+            };
+            nlp-service-wrapped =
+              pkgs.runCommand "nlp-service"
+                {
+                  nativeBuildInputs = with pkgs; [ makeWrapper ];
+                }
+                ''
+                  mkdir -p $out/bin
+                  makeWrapper \
+                    ${lib.getExe config.packages.nlp-service} \
+                    $out/bin/nlp-service \
+                    --set LD_PRELOAD $(${pkgs.busybox}/bin/find \
+                    /run/opengl-driver/lib /lib/x86_64-linux-gnu \
+                    -name "libcuda.so.*" \
+                    -type f \
+                    2>/dev/null \
+                    | head -n 1)
+                '';
             docker = pkgs.dockerTools.streamLayeredImage {
               name = "nlp-service";
               tag = "latest";
               created = "now";
               config.Entrypoint = [
-                (lib.getExe entrypoint)
+                (lib.getExe config.packages.default)
                 "--host"
                 "0.0.0.0"
               ];
