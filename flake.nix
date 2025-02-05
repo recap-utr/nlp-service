@@ -113,6 +113,9 @@
                 "--host"
                 "0.0.0.0"
               ];
+              config.ExposedPorts = {
+                "50100/tcp" = { };
+              };
             };
             release-env = pkgs.buildEnv {
               name = "release-env";
