@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -8,6 +9,12 @@ from spacy.tokens import DocBin
 from typer import Typer
 
 from .lib import Nlp, PipeSelection
+
+logging.basicConfig(
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    level=logging.INFO,
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
 
 
 @dataclass(frozen=True, slots=True)
