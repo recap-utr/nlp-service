@@ -22,8 +22,8 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v4
-      - uses: DeterminateSystems/nix-installer-action@v14
-      - uses: DeterminateSystems/magic-nix-cache-action@v8
+      - uses: DeterminateSystems/nix-installer-action@v16
+      - uses: DeterminateSystems/magic-nix-cache-action@v9
       - run: nix profile install .#release-env
       - uses: cihelper/action-semanticrelease-poetry@v1
         id: semanticrelease
