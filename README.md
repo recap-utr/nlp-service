@@ -14,32 +14,15 @@ We will discuss the client at the end of this README.
 
 ## Installation and Setup
 
-We are using `nix` and `poetry` to manage the dependencies and provide a ready-to-use Docker image.
-
-### Docker (recommended)
-
-The container caches the downloaded models, so you should not pass `--rm` to `docker run`.
+We use `nix` and `uv` to manage the dependencies and provide a ready-to-use Docker image.
 
 ```sh
-docker run -it ghcr.io/recap-utr/nlp-service:latest "0.0.0.0:50100"
-```
-
-### Nix (advanced)
-
-```sh
-nix run github:recap-utr/nlp-service -- "127.0.0.1:50100"
-# or after cloning this repository
-nix develop -c poetry run python -m nlp_service "127.0.0.1:50100"
-```
-
-### Poetry (advanced)
-
-```sh
-# The server dependencies are optional, thus they have to be installed explicitly.
-poetry install --extras all
-# To run the server, you need to specify the address it should listen on.
-# In this example, it should liston on port 5678 on localhost.
-poetry run python -m nlp_service "127.0.0.1:50100"
+# Docker (recommended)
+docker run -it ghcr.io/recap-utr/nlp-service:latest
+# uv
+uv run --all-extras nlp_service
+# nix (advanced)
+nix run github:recap-utr/nlp-service
 ```
 
 ## General Usage
