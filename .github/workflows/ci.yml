@@ -10,9 +10,15 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
-      - uses: docker/setup-qemu-action@v3
-      - uses: DeterminateSystems/nix-installer-action@v14
-      - uses: DeterminateSystems/magic-nix-cache-action@v8
+      - uses: DeterminateSystems/nix-installer-action@v16
+        with:
+          extra-conf: |
+            accept-flake-config = true
+            log-lines = 1000
+      - uses: cachix/cachix-action@v15
+        with:
+          name: recap
+          authToken: ${{ secrets.CACHIX_TOKEN }}
       - run: nix flake check --show-trace
   release:
     runs-on: ubuntu-latest
@@ -23,10 +29,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/nix-installer-action@v16
-      - uses: DeterminateSystems/magic-nix-cache-action@v9
+        with:
+          extra-conf: |
+            accept-flake-config = true
+            log-lines = 1000
+      - uses: cachix/cachix-action@v15
+        with:
+          name: recap
+          authToken: ${{ secrets.CACHIX_TOKEN }}
       - run: nix profile install .#release-env
-      - uses: cihelper/action-semanticrelease-poetry@v1
+      - uses: cihelper/action-semanticrelease-uv@v1
         id: semanticrelease
+        with:
+          uv-publish: false
       - uses: pypa/gh-action-pypi-publish@release/v1
         if: ${{ steps.semanticrelease.outputs.released == 'true' }}
       - run: nix run .#docker-manifest --impure
