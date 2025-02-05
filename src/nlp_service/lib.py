@@ -124,7 +124,7 @@ class Nlp:
     ) -> cbrkit.typing.RetrieverFunc[Any, str, float]:
         return self.retrieval_init(self.sim_func(config))
 
-    def doc(
+    def pipe_docs(
         self,
         config: nlp_pb2.NlpConfig,
         batches: Sequence[str],

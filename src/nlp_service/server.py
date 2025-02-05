@@ -37,7 +37,7 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
             in request.embedding_levels
         )
 
-        docs = self.nlp.doc(
+        docs = self.nlp.pipe_docs(
             request.config,
             request.texts,
             pipes_selection,
