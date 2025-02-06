@@ -15,6 +15,8 @@ from . import client
 __all__ = [
     "Nlp",
     "PipeSelection",
+    "EmbedFunc",
+    "ScoreFunc",
     "model",
     "rpc",
     "client",
