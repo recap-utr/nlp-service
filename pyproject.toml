@@ -20,17 +20,10 @@ classifiers = [
     "Typing :: Typed",
 ]
 requires-python = ">=3.12"
-dependencies = [
-    "arg-services>=1,<2",
-    "cbrkit[nlp,llm,transformers]>=0.21,<1",
-    "typer>=0.9,<1",
-]
+dependencies = ["arg-services>=1,<2", "typer>=0.9,<1", "cbrkit[nlp]>=0.21,<1"]
 
-# [project.optional-dependencies]
-# spacy-en-lg = [
-#     "en-core-web-lg==3.7.1; sys_platform == 'darwin' and platform_machine == 'x86_64'",
-#     "en-core-web-lg==3.8.0; (sys_platform == 'darwin' and platform_machine == 'arm64') or sys_platform == 'linux'",
-# ]
+[project.optional-dependencies]
+all = ["cbrkit[llm,transformers]>=0.21,<1"]
 
 [project.scripts]
 nlp-service = "nlp_service.server:main"
@@ -44,9 +37,3 @@ Changelog = "https://github.com/recap-utr/nlp-service/releases"
 [build-system]
 requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
-
-[tool.uv.sources]
-# en-core-web-lg = [
-#     { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_lg-3.7.1/en_core_web_lg-3.7.1-py3-none-any.whl", marker = "sys_platform == 'darwin' and platform_machine == 'x86_64'" },
-#     { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_lg-3.8.0/en_core_web_lg-3.8.0-py3-none-any.whl", marker = "(sys_platform == 'darwin' and platform_machine == 'arm64') or sys_platform == 'linux'" },
-# ]

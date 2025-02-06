@@ -930,14 +930,20 @@ version = "2.0.0b2"
 source = { editable = "." }
 dependencies = [
     { name = "arg-services" },
-    { name = "cbrkit", extra = ["llm", "nlp", "transformers"] },
+    { name = "cbrkit", extra = ["nlp"] },
     { name = "typer" },
+]
+
+[package.optional-dependencies]
+all = [
+    { name = "cbrkit", extra = ["llm", "transformers"] },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "arg-services", specifier = ">=1,<2" },
-    { name = "cbrkit", extras = ["nlp", "llm", "transformers"], specifier = ">=0.21,<1" },
+    { name = "cbrkit", extras = ["llm", "transformers"], marker = "extra == 'all'", specifier = ">=0.21,<1" },
+    { name = "cbrkit", extras = ["nlp"], specifier = ">=0.21,<1" },
     { name = "typer", specifier = ">=0.9,<1" },
 ]
 
