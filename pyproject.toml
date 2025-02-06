@@ -20,10 +20,14 @@ classifiers = [
     "Typing :: Typed",
 ]
 requires-python = ">=3.12"
-dependencies = ["arg-services>=1,<2", "typer>=0.9,<1", "cbrkit[nlp]>=0.21,<1"]
+dependencies = [
+    "arg-services>=1.7.5,<2",
+    "cbrkit[nlp]>=0.21.1,<1",
+    "typer>=0.9,<1",
+]
 
 [project.optional-dependencies]
-all = ["cbrkit[llm,transformers]>=0.21,<1"]
+all = ["cbrkit[llm,transformers]"]
 
 [project.scripts]
 nlp-service = "nlp_service.server:main"
