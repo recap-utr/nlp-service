@@ -1,5 +1,34 @@
 # Changelog
 
+## [2.0.0](https://github.com/recap-utr/nlp-service/compare/v1.4.10...v2.0.0) (2025-02-06)
+
+### ⚠ BREAKING CHANGES
+
+* The NLP service is now based on [CBRkit](https://github.com/wi2trier/cbrkit).
+* The NLP service can be imported as a Python library to convert Protobuf-based NLP configurations into CBRkit similarity functions.
+* rewrite the service using cbrkit as the backend
+* Instead of using protobuf definitions from arg-services, the package now contains code generated via betterproto. We also added a library that can be used in other Python projects without needing to start a server. Lastly, a proper CLI has been integrated that (besides starting the server) allows to perform semantic retrieval in the local file system.
+
+### Features
+
+* add autodump ([ee0fcb2](https://github.com/recap-utr/nlp-service/commit/ee0fcb267385514dbba4e667f9cbe569c942fafb))
+* migrate to central class-based interface ([734b7dc](https://github.com/recap-utr/nlp-service/commit/734b7dc7ef9b41d0fb5e1913014ad860e38c2f06))
+* remove global state and make the nlp config a parameter ([9d54af7](https://github.com/recap-utr/nlp-service/commit/9d54af7a4c367bced26f97153cc51dd912986846))
+* rewrite the service completely ([07a53c6](https://github.com/recap-utr/nlp-service/commit/07a53c6de61cfde496634afaa50c31564504fd06))
+* rewrite the service using cbrkit as the backend ([ac78b54](https://github.com/recap-utr/nlp-service/commit/ac78b54991fd8c4833743e895f2c15b51cfe6385))
+* switch back to google's grpc/protobuf due to compatibility issues ([87d380d](https://github.com/recap-utr/nlp-service/commit/87d380d0f58ba0bc482d3156b6f24900fe9333bb))
+
+### Bug Fixes
+
+* remove lazy from cache ([5d42fa8](https://github.com/recap-utr/nlp-service/commit/5d42fa84fbbce9751c8ba658a5dd0bafa4b515bb))
+* remove specialized embedders, always build on similarity ([13d8304](https://github.com/recap-utr/nlp-service/commit/13d83043d1f367333470aca5f402cf919ee7db9b))
+* **server:** set up logging ([ad51b9d](https://github.com/recap-utr/nlp-service/commit/ad51b9df697ea7393a69983d5903ede2fb36367c))
+* use correct data types for serializable embedding model ([a97fe3a](https://github.com/recap-utr/nlp-service/commit/a97fe3a538994f6a6b702fb5a12d1345014ce2dd))
+
+### Miscellaneous Chores
+
+* update changelog ([d81c34c](https://github.com/recap-utr/nlp-service/commit/d81c34c427b67d533e1b98c3da7f9814a693625d))
+
 ## [2.0.0-beta.2](https://github.com/recap-utr/nlp-service/compare/v2.0.0-beta.1...v2.0.0-beta.2) (2024-05-28)
 
 
