@@ -49,7 +49,7 @@ score_funcs: Mapping[nlp_pb2.SimilarityMethod, Callable[[], ScoreFunc]] = {
     nlp_pb2.SimilarityMethod.SIMILARITY_METHOD_ANGULAR: cbrkit.sim.embed.angular,
     nlp_pb2.SimilarityMethod.SIMILARITY_METHOD_EUCLIDEAN: cbrkit.sim.embed.euclidean,
     nlp_pb2.SimilarityMethod.SIMILARITY_METHOD_MANHATTAN: cbrkit.sim.embed.manhattan,
-    # nlp_pb2.SimilarityMethod.SIMILARITY_METHOD_DOT: cbrkit.sim.embed.dot,
+    nlp_pb2.SimilarityMethod.SIMILARITY_METHOD_DOT: cbrkit.sim.embed.dot,
 }
 
 
