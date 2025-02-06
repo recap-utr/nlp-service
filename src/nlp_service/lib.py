@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Any, TypedDict
 
 import cbrkit
-import spacy
 from arg_services.nlp.v1 import nlp_pb2
 from spacy.tokens import Doc
 
@@ -137,7 +136,7 @@ class Nlp:
         if "enable" in pipes_selection:
             pipes_selection["enable"] = tuple(pipes_selection["enable"])
 
-        nlp = spacy.load(config.spacy_model)
+        nlp = cbrkit.sim.embed.load_spacy(config.spacy_model)
 
         with nlp.select_pipes(**pipes_selection):
             docs = list(nlp.pipe(batches))
