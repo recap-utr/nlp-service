@@ -1,12 +1,23 @@
 import numpy as np
 import spacy
-from arg_services.nlp.v1.nlp_pb2 import VectorResponse
+from arg_services.nlp.v1 import nlp_pb2 as model
+from arg_services.nlp.v1 import nlp_pb2_grpc as rpc
 from spacy.language import Language as SpacyLanguage
 from spacy.tokens import Doc, DocBin, Span, Token
 
 Doc.set_extension("vector", default=None)
 Span.set_extension("vector", default=None)
 Token.set_extension("vector", default=None)
+
+__all__ = [
+    "model",
+    "rpc",
+    "blank",
+    "docbin2docs",
+    "inject_vectors",
+    "inject_pipes",
+    "remote_vector",
+]
 
 
 def blank(language: str) -> SpacyLanguage:
@@ -25,7 +36,7 @@ def docbin2docs(docbin_bytes: bytes, language: str | SpacyLanguage) -> tuple[Doc
     return tuple(docbin.get_docs(language.vocab))
 
 
-def inject_vectors(doc: Doc, res: VectorResponse) -> None:
+def inject_vectors(doc: Doc, res: model.VectorResponse) -> None:
     if res.document:
         doc._.set("vector", np.array(res.document.vector))
 
