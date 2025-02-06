@@ -1,4 +1,5 @@
 on:
+  pull_request:
   push:
     branches:
       - main
@@ -21,6 +22,8 @@ jobs:
           authToken: ${{ secrets.CACHIX_TOKEN }}
       - run: nix flake check --show-trace
   release:
+    needs: check
+    if: ${{ github.repository_owner == 'recap-utr' && github.event_name == 'push' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
