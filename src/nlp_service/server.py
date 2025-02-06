@@ -4,11 +4,10 @@ from pathlib import Path
 
 import arg_services
 import grpc
-from arg_services.nlp.v1 import nlp_pb2, nlp_pb2_grpc
 from spacy.tokens import DocBin
 from typer import Typer
 
-from .lib import Nlp, PipeSelection
+from . import Nlp, PipeSelection, model, rpc
 
 logging.basicConfig(
     format="%(asctime)s %(levelname)s %(name)s: %(message)s",
@@ -18,12 +17,12 @@ logging.basicConfig(
 
 
 @dataclass(frozen=True, slots=True)
-class NlpService(nlp_pb2_grpc.NlpServiceServicer):
+class NlpService(rpc.NlpServiceServicer):
     nlp: Nlp
 
     def DocBin(
-        self, request: nlp_pb2.DocBinRequest, context: grpc.ServicerContext
-    ) -> nlp_pb2.DocBinResponse:
+        self, request: model.DocBinRequest, context: grpc.ServicerContext
+    ) -> model.DocBinResponse:
         pipes_selection: PipeSelection | None = None
 
         if request.WhichOneof("pipes") == "enabled_pipes":
@@ -32,8 +31,8 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
             pipes_selection = {"disable": tuple(request.disabled_pipes.values)}
 
         vectorize = (
-            nlp_pb2.EmbeddingLevel.EMBEDDING_LEVEL_DOCUMENT in request.embedding_levels
-            or nlp_pb2.EmbeddingLevel.EMBEDDING_LEVEL_UNSPECIFIED
+            model.EmbeddingLevel.EMBEDDING_LEVEL_DOCUMENT in request.embedding_levels
+            or model.EmbeddingLevel.EMBEDDING_LEVEL_UNSPECIFIED
             in request.embedding_levels
         )
 
@@ -45,32 +44,32 @@ class NlpService(nlp_pb2_grpc.NlpServiceServicer):
         )
 
         if request.attributes.values:
-            return nlp_pb2.DocBinResponse(
+            return model.DocBinResponse(
                 docbin=DocBin(
                     request.attributes.values, docs=docs, store_user_data=True
                 ).to_bytes()
             )
 
-        return nlp_pb2.DocBinResponse(
+        return model.DocBinResponse(
             docbin=DocBin(docs=docs, store_user_data=True).to_bytes()
         )
 
     async def Vectors(
-        self, request: nlp_pb2.VectorsRequest, context: grpc.ServicerContext
-    ) -> nlp_pb2.VectorsResponse:
+        self, request: model.VectorsRequest, context: grpc.ServicerContext
+    ) -> model.VectorsResponse:
         embed_func = self.nlp.embed_func(request.config)
-        return nlp_pb2.VectorsResponse(
+        return model.VectorsResponse(
             vectors=[
-                nlp_pb2.VectorResponse(document=nlp_pb2.Vector(vector=vector.tolist()))
+                model.VectorResponse(document=model.Vector(vector=vector.tolist()))
                 for vector in embed_func(request.texts)
             ]
         )
 
     async def Similarities(
-        self, request: nlp_pb2.SimilaritiesRequest, context: grpc.ServicerContext
-    ) -> nlp_pb2.SimilaritiesResponse:
+        self, request: model.SimilaritiesRequest, context: grpc.ServicerContext
+    ) -> model.SimilaritiesResponse:
         sim_func = self.nlp.sim_func(request.config)
-        return nlp_pb2.SimilaritiesResponse(
+        return model.SimilaritiesResponse(
             similarities=sim_func([(x.text1, x.text2) for x in request.text_tuples])
         )
 
@@ -85,7 +84,7 @@ class ServiceAdder:
     def __call__(self, server: grpc.Server):
         """Add the services to the grpc server."""
 
-        nlp_pb2_grpc.add_NlpServiceServicer_to_server(NlpService(self.nlp), server)
+        rpc.add_NlpServiceServicer_to_server(NlpService(self.nlp), server)
 
 
 @app.command()
@@ -98,5 +97,5 @@ def main(
     arg_services.serve(
         f"{host}:{port}",
         ServiceAdder(Nlp(cache_dir, autodump)),
-        [arg_services.full_service_name(nlp_pb2, "NlpService")],
+        [arg_services.full_service_name(model, "NlpService")],
     )
