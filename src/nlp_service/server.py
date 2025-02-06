@@ -16,7 +16,7 @@ logging.basicConfig(
 )
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(slots=True)
 class NlpService(rpc.NlpServiceServicer):
     nlp: Nlp
 
@@ -77,7 +77,7 @@ class NlpService(rpc.NlpServiceServicer):
 app = Typer()
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(slots=True)
 class ServiceAdder:
     nlp: Nlp
 

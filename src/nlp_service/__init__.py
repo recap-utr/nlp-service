@@ -51,7 +51,7 @@ score_funcs: Mapping[nlp_pb2.SimilarityMethod, Callable[[], ScoreFunc]] = {
 }
 
 
-@dataclass(slots=True, frozen=True)
+@dataclass(slots=True)
 class Nlp:
     cache_dir: Path | None = None
     autodump: bool = False
