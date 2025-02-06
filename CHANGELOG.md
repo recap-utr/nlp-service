@@ -6,8 +6,6 @@
 
 * The NLP service is now based on [CBRkit](https://github.com/wi2trier/cbrkit).
 * The NLP service can be imported as a Python library to convert Protobuf-based NLP configurations into CBRkit similarity functions.
-* rewrite the service using cbrkit as the backend
-* Instead of using protobuf definitions from arg-services, the package now contains code generated via betterproto. We also added a library that can be used in other Python projects without needing to start a server. Lastly, a proper CLI has been integrated that (besides starting the server) allows to perform semantic retrieval in the local file system.
 
 ### Features
 
