@@ -2,7 +2,7 @@ import logging
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, TypedDict
+from typing import Any, TypedDict, override
 
 import cbrkit
 from arg_services.nlp.v1 import nlp_pb2
@@ -51,6 +51,29 @@ score_funcs: Mapping[nlp_pb2.SimilarityMethod, Callable[[], ScoreFunc]] = {
     nlp_pb2.SimilarityMethod.SIMILARITY_METHOD_MANHATTAN: cbrkit.sim.embed.manhattan,
     nlp_pb2.SimilarityMethod.SIMILARITY_METHOD_DOT: cbrkit.sim.embed.dot,
 }
+
+
+with cbrkit.helpers.optional_dependencies():
+    import tensorflow as tf
+    import tensorflow_hub as hub
+
+    @dataclass(slots=True)
+    class tf_hub_embedder(
+        cbrkit.typing.BatchConversionFunc[str, cbrkit.typing.NumpyArray]
+    ):
+        model: Callable[[Sequence[str]], tf.Tensor]
+
+        def __init__(self, model: str):
+            self.model = hub.load(model)  # pyright: ignore
+
+        @override
+        def __call__(self, texts: Sequence[str]) -> Sequence[cbrkit.typing.NumpyArray]:
+            if not texts:
+                return []
+
+            return self.model(texts).numpy().tolist()  # pyright: ignore
+
+    embed_funcs[nlp_pb2.EmbeddingType.EMBEDDING_TYPE_TENSORFLOW_HUB] = tf_hub_embedder  # pyright: ignore
 
 
 @dataclass(slots=True)
