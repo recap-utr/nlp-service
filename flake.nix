@@ -105,9 +105,10 @@
               package = pythonSet.nlp-service;
             };
             nlp-service-wrapped =
-              pkgs.runCommand "nlp-service"
+              pkgs.runCommand "nlp-service-wrapped"
                 {
                   nativeBuildInputs = with pkgs; [ makeWrapper ];
+                  inherit (config.packages.nlp-service) meta;
                 }
                 ''
                   mkdir -p $out/bin
