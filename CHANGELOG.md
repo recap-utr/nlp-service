@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.0.1](https://github.com/recap-utr/nlp-service/compare/v2.0.0...v2.0.1) (2025-03-03)
+
+### Bug Fixes
+
+* add tensorflow-hub embedder ([f325e19](https://github.com/recap-utr/nlp-service/commit/f325e190758967028748eef8db0e2bc293c75311))
+
 ## [2.0.0](https://github.com/recap-utr/nlp-service/compare/v1.4.10...v2.0.0) (2025-02-06)
 
 ### ⚠ BREAKING CHANGES
