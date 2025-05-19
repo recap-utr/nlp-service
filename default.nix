@@ -5,6 +5,7 @@
   pyproject-nix,
   pyproject-build-systems,
   python3,
+  tbb_2021_11,
 }:
 let
   workspace = uv2nix.lib.workspace.loadWorkspace { workspaceRoot = ./.; };
@@ -14,7 +15,7 @@ let
   getCudaPkgs = attrs: lib.filter (name: lib.hasPrefix "nvidia-" name) (lib.attrNames attrs);
   cudaOverlay =
     final: prev:
-    lib.genAttrs ([ "torch" ] ++ (getCudaPkgs prev)) (
+    lib.genAttrs (getCudaPkgs prev) (
       name:
       prev.${name}.overrideAttrs (old: {
         autoPatchelfIgnoreMissingDeps = true;
@@ -23,6 +24,12 @@ let
   packageOverlay =
     final: prev:
     lib.mapAttrs (name: value: prev.${name}.overrideAttrs value) {
+      torch = old: {
+        autoPatchelfIgnoreMissingDeps = true;
+      };
+      numba = old: {
+        buildInputs = (old.buildInputs or [ ]) ++ [ tbb_2021_11 ];
+      };
       cbrkit = old: {
         meta = (old.meta or { }) // {
           mainProgram = "nlp-service";
