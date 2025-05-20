@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.0.2](https://github.com/recap-utr/nlp-service/compare/v2.0.1...v2.0.2) (2025-05-20)
+
+### Bug Fixes
+
+* **build:** correctly wrap package to expose cuda libraries ([0bc9bf7](https://github.com/recap-utr/nlp-service/commit/0bc9bf78a8405a66ae81980ad7848facf543254e))
+
 ## [2.0.1](https://github.com/recap-utr/nlp-service/compare/v2.0.0...v2.0.1) (2025-03-03)
 
 ### Bug Fixes

@@ -1,6 +1,6 @@
 [project]
 name = "nlp-service"
-version = "2.0.1"
+version = "2.0.2"
 description = "Microservice for NLP tasks using gRPC"
 authors = [{ name = "Mirko Lenz", email = "mirko@mirkolenz.com" }]
 readme = "README.md"
