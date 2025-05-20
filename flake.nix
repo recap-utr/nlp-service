@@ -104,24 +104,25 @@
               venv = pythonSet.mkVirtualEnv "nlp-service-env" workspace.deps.optionals;
               package = pythonSet.nlp-service;
             };
-            nlp-service-wrapped =
-              pkgs.runCommand "nlp-service-wrapped"
-                {
-                  nativeBuildInputs = with pkgs; [ makeWrapper ];
-                  inherit (config.packages.nlp-service) meta;
-                }
-                ''
-                  mkdir -p $out/bin
-                  makeWrapper \
-                    ${lib.getExe config.packages.nlp-service} \
-                    $out/bin/nlp-service \
-                    --set LD_PRELOAD $(${pkgs.busybox}/bin/find \
-                    /run/opengl-driver/lib /lib/x86_64-linux-gnu \
-                    -name "libcuda.so.*" \
-                    -type f \
-                    2>/dev/null \
-                    | head -n 1)
-                '';
+            nlp-service-wrapped = pkgs.writeShellApplication {
+              name = "nlp-service";
+              text = ''
+                LD_PRELOAD="$(
+                  ${pkgs.toybox}/bin/find \
+                    /usr/lib /run/opengl-driver/lib \
+                    -name "libcuda.so.*" -type f \
+                    -print -quit 2>/dev/null || true
+                )"
+
+                if [ -n "$LD_PRELOAD" ]; then
+                  export LD_PRELOAD
+                else
+                  unset LD_PRELOAD
+                fi
+
+                exec ${lib.getExe config.packages.nlp-service} "$@"
+              '';
+            };
             docker = pkgs.dockerTools.streamLayeredImage {
               name = "nlp-service";
               tag = "latest";
