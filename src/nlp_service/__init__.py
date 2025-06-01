@@ -80,6 +80,7 @@ with cbrkit.helpers.optional_dependencies():
 class Nlp:
     cache_dir: Path | None = None
     autodump: bool = False
+    autoload: bool = False
     provider_cache: bool = True
     provider_init: Mapping[nlp_pb2.EmbeddingType, Callable[[str], EmbedFunc]] | None = (
         field(default_factory=dict)
@@ -98,6 +99,13 @@ class Nlp:
         for func in self.provider_store.values():
             if isinstance(func, cbrkit.sim.embed.cache):
                 func.dump()
+
+    def load(
+        self,
+    ) -> None:
+        for func in self.provider_store.values():
+            if isinstance(func, cbrkit.sim.embed.cache):
+                func.load()
 
     def embed_provider(
         self, model_type: nlp_pb2.EmbeddingType, model_name: str
@@ -131,6 +139,7 @@ class Nlp:
             embed_func,
             cache_path,
             autodump=self.autodump,
+            autoload=self.autoload,
         )
 
         if self.provider_cache:
