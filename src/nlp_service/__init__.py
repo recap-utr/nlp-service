@@ -80,6 +80,7 @@ with cbrkit.helpers.optional_dependencies():
 class Nlp:
     cache_dir: Path | None = None
     autodump: bool = False
+    provider_cache: bool = True
     provider_init: Mapping[nlp_pb2.EmbeddingType, Callable[[str], EmbedFunc]] | None = (
         field(default_factory=dict)
     )
@@ -87,14 +88,14 @@ class Nlp:
         [cbrkit.typing.AnySimFunc[str, float]],
         cbrkit.typing.RetrieverFunc[Any, str, float],
     ] = cbrkit.retrieval.build
-    embed_provider_cache: MutableMapping[
-        tuple[nlp_pb2.EmbeddingType, str], EmbedFunc
-    ] = field(default_factory=dict, init=False)
+    provider_store: MutableMapping[tuple[nlp_pb2.EmbeddingType, str], EmbedFunc] = (
+        field(default_factory=dict, init=False, repr=False)
+    )
 
     def dump(
         self,
     ) -> None:
-        for func in self.embed_provider_cache.values():
+        for func in self.provider_store.values():
             if isinstance(func, cbrkit.sim.embed.cache):
                 func.dump()
 
@@ -103,32 +104,39 @@ class Nlp:
     ) -> EmbedFunc:
         key = (model_type, model_name)
 
-        if key not in self.embed_provider_cache:
-            if self.provider_init is None:
-                embed_func = None
-            else:
-                init_func = self.provider_init.get(
-                    model_type,
-                    embed_funcs[model_type],
-                )
-                embed_func = init_func(model_name)
+        if key in self.provider_store:
+            return self.provider_store[key]
 
-            if self.cache_dir:
-                model_type_label = (
-                    nlp_pb2.EmbeddingType.Name(model_type)
-                    .removeprefix("EMBEDDING_TYPE_")
-                    .lower()
-                )
-                cache_filename = f"{model_type_label}_{model_name}.npz"
-                cache_path = self.cache_dir / cache_filename
-            else:
-                cache_path = None
-
-            self.embed_provider_cache[key] = cbrkit.sim.embed.cache(
-                embed_func, cache_path, self.autodump
+        if self.provider_init is None:
+            embed_func = None
+        else:
+            init_func = self.provider_init.get(
+                model_type,
+                embed_funcs[model_type],
             )
+            embed_func = init_func(model_name)
 
-        return self.embed_provider_cache[key]
+        if self.cache_dir:
+            model_type_label = (
+                nlp_pb2.EmbeddingType.Name(model_type)
+                .removeprefix("EMBEDDING_TYPE_")
+                .lower()
+            )
+            cache_filename = f"{model_type_label}_{model_name}.npz"
+            cache_path = self.cache_dir / cache_filename
+        else:
+            cache_path = None
+
+        func = cbrkit.sim.embed.cache(
+            embed_func,
+            cache_path,
+            autodump=self.autodump,
+        )
+
+        if self.provider_cache:
+            self.provider_store[key] = func
+
+        return func
 
     def embed_providers(self, config: nlp_pb2.NlpConfig) -> list[EmbedFunc]:
         if not config.embedding_models:
