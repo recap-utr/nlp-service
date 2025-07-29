@@ -72,6 +72,10 @@
             mkApplication
             workspace
             ;
+          nlp-service = mkApplication {
+            venv = pythonSet.mkVirtualEnv "nlp-service-env" workspace.deps.optionals;
+            package = pythonSet.nlp-service;
+          };
         in
         {
           _module.args.pkgs = import nixpkgs {
@@ -99,36 +103,23 @@
             };
           };
           packages = {
-            default = config.packages.nlp-service-wrapped;
-            nlp-service = mkApplication {
-              venv = pythonSet.mkVirtualEnv "nlp-service-env" workspace.deps.optionals;
-              package = pythonSet.nlp-service;
-            };
-            nlp-service-wrapped = pkgs.writeShellApplication {
-              name = "nlp-service";
-              text = ''
-                LD_PRELOAD="$(
-                  ${pkgs.toybox}/bin/find \
-                    /usr/lib /run/opengl-driver/lib \
-                    -name "libcuda.so.*" -type f \
-                    -print -quit 2>/dev/null || true
-                )"
-
-                if [ -n "$LD_PRELOAD" ]; then
-                  export LD_PRELOAD
-                else
-                  unset LD_PRELOAD
-                fi
-
-                exec ${lib.getExe config.packages.nlp-service} "$@"
-              '';
-            };
+            default = config.packages.nlp-service;
+            nlp-service =
+              pkgs.runCommandNoCC "nlp-service"
+                {
+                  nativeBuildInputs = with pkgs; [ makeWrapper ];
+                }
+                ''
+                  mkdir -p $out/bin
+                  makeWrapper ${lib.getExe nlp-service} $out/bin/nlp-service \
+                    --prefix LD_LIBRARY_PATH : "/run/opengl-driver/lib"
+                '';
             docker = pkgs.dockerTools.streamLayeredImage {
               name = "nlp-service";
               tag = "latest";
               created = "now";
               config.Entrypoint = [
-                (lib.getExe config.packages.default)
+                (lib.getExe config.packages.nlp-service)
                 "--host"
                 "0.0.0.0"
               ];
