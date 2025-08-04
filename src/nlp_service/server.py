@@ -91,11 +91,10 @@ class ServiceAdder:
 def main(
     host: str = "127.0.0.1",
     port: int = 50100,
-    cache_dir: Path | None = None,
-    autodump: bool = False,
+    cache: Path | None = None,
 ):
     arg_services.serve(
         f"{host}:{port}",
-        ServiceAdder(Nlp(cache_dir, autodump)),
+        ServiceAdder(Nlp(cache_path=cache)),
         [arg_services.full_service_name(model, "NlpService")],
     )

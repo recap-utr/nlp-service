@@ -78,9 +78,7 @@ with cbrkit.helpers.optional_dependencies():
 
 @dataclass(slots=True)
 class Nlp:
-    cache_dir: Path | None = None
-    autodump: bool = False
-    autoload: bool = False
+    cache_path: Path | None = None
     provider_cache: bool = True
     provider_init: Mapping[nlp_pb2.EmbeddingType, Callable[[str], EmbedFunc]] | None = (
         field(default_factory=dict)
@@ -92,20 +90,6 @@ class Nlp:
     provider_store: MutableMapping[tuple[nlp_pb2.EmbeddingType, str], EmbedFunc] = (
         field(default_factory=dict, init=False, repr=False)
     )
-
-    def dump(
-        self,
-    ) -> None:
-        for func in self.provider_store.values():
-            if isinstance(func, cbrkit.sim.embed.cache):
-                func.dump()
-
-    def load(
-        self,
-    ) -> None:
-        for func in self.provider_store.values():
-            if isinstance(func, cbrkit.sim.embed.cache):
-                func.load()
 
     def embed_provider(
         self, model_type: nlp_pb2.EmbeddingType, model_name: str
@@ -124,22 +108,16 @@ class Nlp:
             )
             embed_func = init_func(model_name)
 
-        if self.cache_dir:
-            model_type_label = (
-                nlp_pb2.EmbeddingType.Name(model_type)
-                .removeprefix("EMBEDDING_TYPE_")
-                .lower()
-            )
-            cache_filename = f"{model_type_label}_{model_name}.npz"
-            cache_path = self.cache_dir / cache_filename
-        else:
-            cache_path = None
+        table_prefix = (
+            nlp_pb2.EmbeddingType.Name(model_type)
+            .removeprefix("EMBEDDING_TYPE_")
+            .lower()
+        )
 
         func = cbrkit.sim.embed.cache(
             embed_func,
-            cache_path,
-            autodump=self.autodump,
-            autoload=self.autoload,
+            path=self.cache_path,
+            table=f"{table_prefix}_{model_name}",
         )
 
         if self.provider_cache:
