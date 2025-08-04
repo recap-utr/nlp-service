@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.0.3](https://github.com/recap-utr/nlp-service/compare/v2.0.2...v2.0.3) (2025-08-04)
+
+### Bug Fixes
+
+* add autoload member and load method ([83e4aa1](https://github.com/recap-utr/nlp-service/commit/83e4aa1fe9ed8137745182ec1f8c7f6ef65a9028))
+* add control over embed provider cache behavior ([832c04a](https://github.com/recap-utr/nlp-service/commit/832c04ab555dee29fab1cf441307681e089f9cbb))
+* use sqlite for vector cache ([71a3ed9](https://github.com/recap-utr/nlp-service/commit/71a3ed9e1bbe2b29f0c184171b5d2ef6eb777d68))
+
 ## [2.0.2](https://github.com/recap-utr/nlp-service/compare/v2.0.1...v2.0.2) (2025-05-20)
 
 ### Bug Fixes
