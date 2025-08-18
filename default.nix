@@ -4,8 +4,8 @@
   uv2nix,
   pyproject-nix,
   pyproject-build-systems,
-  python3,
-  tbb_2021_11,
+  python312,
+  tbb_2021,
 }:
 let
   workspace = uv2nix.lib.workspace.loadWorkspace { workspaceRoot = ./.; };
@@ -28,7 +28,7 @@ let
         autoPatchelfIgnoreMissingDeps = true;
       };
       numba = old: {
-        buildInputs = (old.buildInputs or [ ]) ++ [ tbb_2021_11 ];
+        buildInputs = (old.buildInputs or [ ]) ++ [ tbb_2021 ];
       };
       cbrkit = old: {
         meta = (old.meta or { }) // {
@@ -42,7 +42,7 @@ let
       };
     };
   baseSet = callPackage pyproject-nix.build.packages {
-    python = python3;
+    python = python312;
   };
 in
 {

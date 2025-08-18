@@ -86,7 +86,6 @@
             };
             overlays = lib.singleton (
               final: prev: {
-                python3 = final.python312;
                 uv = uv2nix.packages.${system}.uv-bin;
               }
             );
@@ -131,7 +130,7 @@
               name = "release-env";
               paths = with pkgs; [
                 uv
-                python3
+                python312
               ];
             };
           };
@@ -154,7 +153,7 @@
               pkgs.zlib
               "/run/opengl-driver"
             ];
-            UV_PYTHON = lib.getExe pkgs.python3;
+            UV_PYTHON = lib.getExe pkgs.python312;
             shellHook = ''
               uv sync --all-extras --locked
             '';
