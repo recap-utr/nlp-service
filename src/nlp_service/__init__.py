@@ -108,7 +108,7 @@ class Nlp:
             )
             embed_func = init_func(model_name)
 
-        table_prefix = (
+        model_type_str = (
             nlp_pb2.EmbeddingType.Name(model_type)
             .removeprefix("EMBEDDING_TYPE_")
             .lower()
@@ -117,7 +117,7 @@ class Nlp:
         func = cbrkit.sim.embed.cache(
             embed_func,
             path=self.cache_path,
-            table=f"{table_prefix}_{model_name}",
+            table=f"{model_type_str},{model_name}",
         )
 
         if self.provider_cache:
