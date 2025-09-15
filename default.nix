@@ -5,7 +5,7 @@
   pyproject-nix,
   pyproject-build-systems,
   python312,
-  tbb_2021,
+  tbb_2022,
 }:
 let
   workspace = uv2nix.lib.workspace.loadWorkspace { workspaceRoot = ./.; };
@@ -42,7 +42,7 @@ let
         autoPatchelfIgnoreMissingDeps = true;
       };
       numba = old: {
-        buildInputs = (old.buildInputs or [ ]) ++ [ tbb_2021 ];
+        buildInputs = (old.buildInputs or [ ]) ++ [ tbb_2022 ];
       };
       nlp-service = old: {
         meta = (old.meta or { }) // {
