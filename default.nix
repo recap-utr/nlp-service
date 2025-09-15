@@ -30,7 +30,7 @@ let
       numba = old: {
         buildInputs = (old.buildInputs or [ ]) ++ [ tbb_2021 ];
       };
-      cbrkit = old: {
+      nlp-service = old: {
         meta = (old.meta or { }) // {
           mainProgram = "nlp-service";
           maintainers = with lib.maintainers; [ mirkolenz ];
