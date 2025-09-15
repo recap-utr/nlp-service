@@ -21,6 +21,20 @@ let
         autoPatchelfIgnoreMissingDeps = true;
       })
     );
+  buildSystemOverlay =
+    final: prev:
+    lib.mapAttrs
+      (
+        name: value:
+        prev.${name}.overrideAttrs (old: {
+          nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ (final.resolveBuildSystem value);
+        })
+      )
+      {
+        llvmlite = {
+          setuptools = [ ];
+        };
+      };
   packageOverlay =
     final: prev:
     lib.mapAttrs (name: value: prev.${name}.overrideAttrs value) {
@@ -52,6 +66,7 @@ in
     lib.composeManyExtensions [
       pyproject-build-systems.overlays.default
       projectOverlay
+      buildSystemOverlay
       cudaOverlay
       packageOverlay
     ]
