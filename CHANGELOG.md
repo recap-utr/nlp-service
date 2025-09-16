@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.0.4](https://github.com/recap-utr/nlp-service/compare/v2.0.3...v2.0.4) (2025-09-16)
+
+### Bug Fixes
+
+* **lib:** change table naming convention ([94dff30](https://github.com/recap-utr/nlp-service/commit/94dff30e0cf28a98cfd418a46c01483a7e7f283c))
+
 ## [2.0.3](https://github.com/recap-utr/nlp-service/compare/v2.0.2...v2.0.3) (2025-08-04)
 
 ### Bug Fixes
