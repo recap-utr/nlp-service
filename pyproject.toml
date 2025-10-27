@@ -30,8 +30,8 @@ dependencies = [
 [project.optional-dependencies]
 all = [
     "cbrkit[llm,transformers]",
-    "tensorflow-hub>=0.16,<1; platform_machine != 'x86_64' or sys_platform != 'darwin'",
-    "tensorflow>=2,<3; platform_machine != 'x86_64' or sys_platform != 'darwin'",
+    "tensorflow-hub>=0.16,<1",
+    "tensorflow>=2,<3",
 ]
 
 [project.scripts]
