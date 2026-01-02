@@ -22,7 +22,7 @@ classifiers = [
 requires-python = ">=3.12"
 dependencies = [
     "arg-services>=1.7.7,<2",
-    "cbrkit[nlp]>=0.28.5,<1",
+    "cbrkit[nlp]>=1,<2",
     "numba>=0.61,<1",
     "typer>=0.9,<1",
 ]

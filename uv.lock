@@ -286,7 +286,7 @@ wheels = [
 
 [[package]]
 name = "cbrkit"
-version = "0.28.9"
+version = "1.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "frozendict" },
@@ -301,9 +301,9 @@ dependencies = [
     { name = "scipy" },
     { name = "xmltodict" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/8d/f3/4120bf3b29748d01c97486af26493d260be1266a9c63dd49eb91d6b194c2/cbrkit-0.28.9.tar.gz", hash = "sha256:3622a02dceeca141f1bb6a3d81dca42d849831d493b97d6d37624d9fbbb3e563", size = 87365, upload-time = "2025-12-02T07:59:57.013Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b1/a1/78b112e007c751c530779b4be0974722b358817e24f13932f52832da390a/cbrkit-1.0.0.tar.gz", hash = "sha256:0f50a2c20ae8d2e375a3a29014f0419f207b89f63e823dcdd360f76a2d37141b", size = 87370, upload-time = "2026-01-02T12:08:49.158Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a0/e4/b9577ac8854a9050cfb8cc77b9182fe4055bfc8d6f551a7fd9e1c559abe6/cbrkit-0.28.9-py3-none-any.whl", hash = "sha256:52542e95b0866512725bad0c6d776d97c9b5aab1d14116018b7e0eff62ed43a8", size = 116674, upload-time = "2025-12-02T07:59:54.852Z" },
+    { url = "https://files.pythonhosted.org/packages/d7/b9/a6ef4acec0c51ad167991f3dbfd3616b7e7e4af19e93d6803efe96d6f05f/cbrkit-1.0.0-py3-none-any.whl", hash = "sha256:0e49e2d1cd6ab03d47411a458924d6e3521a955531c205a2cdcb48a54a4ba7ef", size = 117802, upload-time = "2026-01-02T12:08:47.66Z" },
 ]
 
 [package.optional-dependencies]
@@ -1839,7 +1839,7 @@ all = [
 requires-dist = [
     { name = "arg-services", specifier = ">=1.7.7,<2" },
     { name = "cbrkit", extras = ["llm", "transformers"], marker = "extra == 'all'" },
-    { name = "cbrkit", extras = ["nlp"], specifier = ">=0.28.5,<1" },
+    { name = "cbrkit", extras = ["nlp"], specifier = ">=1,<2" },
     { name = "numba", specifier = ">=0.61,<1" },
     { name = "tensorflow", marker = "extra == 'all'", specifier = ">=2,<3" },
     { name = "tensorflow-hub", marker = "extra == 'all'", specifier = ">=0.16,<1" },
