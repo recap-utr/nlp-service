@@ -57,23 +57,23 @@ with cbrkit.helpers.optional_dependencies():
     import tensorflow as tf
     import tensorflow_hub as hub
 
-    @dataclass(slots=True)
+    @dataclass(slots=True, init=False)
     class tf_hub_embedder(
         cbrkit.typing.BatchConversionFunc[str, cbrkit.typing.NumpyArray]
     ):
         model: Callable[[Sequence[str]], tf.Tensor]
 
         def __init__(self, model: str):
-            self.model = hub.load(model)  # pyright: ignore
+            self.model = hub.load(model)
 
         @override
         def __call__(self, texts: Sequence[str]) -> Sequence[cbrkit.typing.NumpyArray]:
             if not texts:
                 return []
 
-            return self.model(texts).numpy().tolist()  # pyright: ignore
+            return self.model(texts).numpy().tolist()
 
-    embed_funcs[nlp_pb2.EmbeddingType.EMBEDDING_TYPE_TENSORFLOW_HUB] = tf_hub_embedder  # pyright: ignore
+    embed_funcs[nlp_pb2.EmbeddingType.EMBEDDING_TYPE_TENSORFLOW_HUB] = tf_hub_embedder
 
 
 @dataclass(slots=True)
