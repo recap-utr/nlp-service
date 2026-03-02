@@ -58,10 +58,6 @@ let
   baseSet = callPackage pyproject-nix.build.packages {
     python = python312;
   };
-in
-{
-  inherit workspace;
-  inherit (callPackage pyproject-nix.build.util { }) mkApplication;
   pythonSet = baseSet.overrideScope (
     lib.composeManyExtensions [
       pyproject-build-systems.overlays.default
@@ -71,4 +67,14 @@ in
       packageOverlay
     ]
   );
+  mkVenv =
+    name: deps:
+    (pythonSet.mkVirtualEnv name deps).overrideAttrs (_: {
+      venvIgnoreCollisions = [ "${python312.sitePackages}/griffe/*" ];
+    });
+  inherit (callPackage pyproject-nix.build.util { }) mkApplication;
+in
+mkApplication {
+  venv = mkVenv "nlp-service-env" workspace.deps.optionals;
+  package = pythonSet.nlp-service;
 }

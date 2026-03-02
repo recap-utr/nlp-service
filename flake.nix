@@ -63,20 +63,6 @@
           config,
           ...
         }:
-        let
-          inherit
-            (pkgs.callPackage ./default.nix {
-              inherit (inputs) uv2nix pyproject-nix pyproject-build-systems;
-            })
-            pythonSet
-            mkApplication
-            workspace
-            ;
-          nlp-service = mkApplication {
-            venv = pythonSet.mkVirtualEnv "nlp-service-env" workspace.deps.optionals;
-            package = pythonSet.nlp-service;
-          };
-        in
         {
           _module.args.pkgs = import nixpkgs {
             inherit system;
@@ -106,13 +92,16 @@
             nlp-service =
               pkgs.runCommandNoCC "nlp-service"
                 {
-                  nativeBuildInputs = with pkgs; [ makeWrapper ];
+                  nativeBuildInputs = with pkgs; [ makeBinaryWrapper ];
                 }
                 ''
                   mkdir -p $out/bin
-                  makeWrapper ${lib.getExe nlp-service} $out/bin/nlp-service \
+                  makeWrapper ${lib.getExe config.packages.nlp-service-unwrapped} $out/bin/nlp-service \
                     --prefix LD_LIBRARY_PATH : "/run/opengl-driver/lib"
                 '';
+            nlp-service-unwrapped = pkgs.callPackage ./default.nix {
+              inherit (inputs) uv2nix pyproject-nix pyproject-build-systems;
+            };
             docker = pkgs.dockerTools.streamLayeredImage {
               name = "nlp-service";
               tag = "latest";
