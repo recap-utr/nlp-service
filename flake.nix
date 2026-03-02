@@ -119,7 +119,7 @@
               name = "release-env";
               paths = with pkgs; [
                 uv
-                python312
+                python313
               ];
             };
           };
@@ -142,9 +142,9 @@
               pkgs.zlib
               "/run/opengl-driver"
             ];
-            UV_PYTHON = lib.getExe pkgs.python312;
+            UV_PYTHON = lib.getExe pkgs.python313;
             shellHook = ''
-              uv sync --all-extras --locked
+              uv sync --all-extras
             '';
           };
         };

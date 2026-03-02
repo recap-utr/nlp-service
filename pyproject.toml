@@ -11,25 +11,25 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Natural Language :: English",
     "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Programming Language :: Python :: 3",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Scientific/Engineering :: Information Analysis",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Typing :: Typed",
 ]
-requires-python = ">=3.12"
+requires-python = ">=3.13,<4"
 dependencies = [
     "arg-services>=1.7.10,<2",
-    "cbrkit[nlp]>=1,<2",
+    "cbrkit[spacy]>=1.2,<2",
     "numba>=0.61,<1",
     "typer>=0.9,<1",
 ]
 
 [project.optional-dependencies]
 all = [
-    "cbrkit[llm,transformers]",
+    "cbrkit[cohere,ollama,openai,transformers,voyageai]",
     "tensorflow-hub>=0.16,<1",
     "tensorflow>=2,<3",
 ]

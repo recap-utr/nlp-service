@@ -4,7 +4,7 @@
   uv2nix,
   pyproject-nix,
   pyproject-build-systems,
-  python312,
+  python313,
   tbb_2022,
 }:
 let
@@ -56,7 +56,7 @@ let
       };
     };
   baseSet = callPackage pyproject-nix.build.packages {
-    python = python312;
+    python = python313;
   };
   pythonSet = baseSet.overrideScope (
     lib.composeManyExtensions [
@@ -70,7 +70,7 @@ let
   mkVenv =
     name: deps:
     (pythonSet.mkVirtualEnv name deps).overrideAttrs (_: {
-      venvIgnoreCollisions = [ "${python312.sitePackages}/griffe/*" ];
+      venvIgnoreCollisions = [ "${python313.sitePackages}/griffe/*" ];
     });
   inherit (callPackage pyproject-nix.build.util { }) mkApplication;
 in
