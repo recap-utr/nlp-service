@@ -17,7 +17,7 @@ jobs:
           extra-conf: |
             accept-flake-config = true
             log-lines = 1000
-      - uses: cachix/cachix-action@3ba601ff5bbb07c7220846facfa2cd81eeee15a1 # v16
+      - uses: cachix/cachix-action@5f2d7c5294214f71b873db4b969586b980625e71 # v17
         with:
           name: recap
           authToken: ${{ secrets.CACHIX_TOKEN }}
@@ -38,7 +38,7 @@ jobs:
           extra-conf: |
             accept-flake-config = true
             log-lines = 1000
-      - uses: cachix/cachix-action@3ba601ff5bbb07c7220846facfa2cd81eeee15a1 # v16
+      - uses: cachix/cachix-action@5f2d7c5294214f71b873db4b969586b980625e71 # v17
         with:
           name: recap
           authToken: ${{ secrets.CACHIX_TOKEN }}
